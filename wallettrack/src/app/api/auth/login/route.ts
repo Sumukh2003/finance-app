@@ -40,6 +40,8 @@ export async function POST(req: Request) {
       JWT_SECRET,
       { expiresIn: "7d" }
     );
+    console.log("JWT_SECRET:", process.env.JWT_SECRET);
+    console.log("Auth header:", req.headers.get("authorization"));
 
     return NextResponse.json({
       message: "Login successful",
