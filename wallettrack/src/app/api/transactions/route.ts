@@ -27,8 +27,11 @@ export async function GET(req: Request) {
     const limit = parseInt(url.searchParams.get("limit") || "10");
     const search = url.searchParams.get("search") || "";
     const sort = url.searchParams.get("sort") || "-date";
+    const type = url.searchParams.get("type");
 
     const query: any = { userId };
+    if (type) query.type = type;
+
     if (search) {
       query.$or = [
         { category: { $regex: search, $options: "i" } },

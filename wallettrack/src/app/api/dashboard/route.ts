@@ -27,15 +27,16 @@ export async function GET(req: Request) {
     await connectDB();
     const userId = getUserId(req);
 
-    /* ---------- Month Range ---------- */
-    const now = new Date();
-    const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
-    const endOfMonth = new Date(now.getFullYear(), now.getMonth() + 1, 1);
+    const url = new URL(req.url);
 
-    const month = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(
-      2,
-      "0"
-    )}`;
+    // default = current month
+    const currentMonth = new Date().toISOString().slice(0, 7);
+    const month = url.searchParams.get("month") || currentMonth;
+
+    const startOfMonth = new Date(`${month}-01`);
+    const endOfMonth = new Date(
+      new Date(startOfMonth).setMonth(startOfMonth.getMonth() + 1)
+    );
 
     /* ---------- Income & Expense ---------- */
     const summary = await Transaction.aggregate([
@@ -61,7 +62,7 @@ export async function GET(req: Request) {
       if (item._id === "expense") expense = item.total;
     });
 
-    /* ---------- Category-wise Expenses ---------- */
+    /* ---------- Category-wise Expenses (FIXED) ---------- */
     const categories = await Transaction.aggregate([
       {
         $match: {
@@ -73,16 +74,40 @@ export async function GET(req: Request) {
       {
         $group: {
           _id: "$category",
-          spent: { $sum: "$amount" },
+          total: { $sum: "$amount" }, // 👈 IMPORTANT
         },
       },
+    ]);
+
+    /* ---------- Monthly Trend (NEW) ---------- */
+    const monthly = await Transaction.aggregate([
+      { $match: { userId } },
+      {
+        $group: {
+          _id: {
+            year: { $year: "$date" },
+            month: { $month: "$date" },
+          },
+          income: {
+            $sum: {
+              $cond: [{ $eq: ["$type", "income"] }, "$amount", 0],
+            },
+          },
+          expense: {
+            $sum: {
+              $cond: [{ $eq: ["$type", "expense"] }, "$amount", 0],
+            },
+          },
+        },
+      },
+      { $sort: { "_id.year": 1, "_id.month": 1 } },
     ]);
 
     /* ---------- Budgets ---------- */
     const budgets = await Budget.find({ userId, month });
 
     const budgetSummary = budgets.map((b) => {
-      const spent = categories.find((c) => c._id === b.category)?.spent || 0;
+      const spent = categories.find((c) => c._id === b.category)?.total || 0;
 
       return {
         category: b.category,
@@ -99,7 +124,8 @@ export async function GET(req: Request) {
       income,
       expense,
       balance: income - expense,
-      categories,
+      categories, // ✅ Pie chart
+      monthly, // ✅ Line chart
       budgets: budgetSummary,
     });
   } catch (err: any) {
