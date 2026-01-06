@@ -1,6 +1,8 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import AddTransactionModal from "@/components/AddTransactionModal";
+import { exportTransactionsCSV } from "@/lib/exportTransactions";
 
 type Transaction = {
   _id: string;
@@ -19,6 +21,7 @@ export default function TransactionsPage() {
   const [search, setSearch] = useState("");
   const [typeFilter, setTypeFilter] = useState("");
   const [sort, setSort] = useState("-date");
+  const [open, setOpen] = useState(false);
 
   const [form, setForm] = useState({
     type: "expense",
@@ -122,7 +125,7 @@ export default function TransactionsPage() {
         </select>
       </div>
 
-      <form onSubmit={createTransaction} className="flex gap-2 mb-6">
+      {/* <form onSubmit={createTransaction} className="flex gap-2 mb-6">
         <select
           value={form.type}
           onChange={(e) => setForm({ ...form, type: e.target.value })}
@@ -155,7 +158,22 @@ export default function TransactionsPage() {
         />
 
         <button className="bg-black text-white px-4">Add</button>
-      </form>
+      </form> */}
+      <div className="flex gap-2">
+        <button
+          onClick={() => setOpen(true)}
+          className="bg-black text-white px-4 py-2 rounded"
+        >
+          + Add Transaction
+        </button>
+
+        <button
+          onClick={() => exportTransactionsCSV(transactions)}
+          className="border border-gray-300 px-4 py-2 rounded"
+        >
+          Export CSV
+        </button>
+      </div>
 
       <table className="w-full border">
         <thead>
@@ -202,6 +220,11 @@ export default function TransactionsPage() {
           Next
         </button>
       </div>
+      <AddTransactionModal
+        open={open}
+        onClose={() => setOpen(false)}
+        onSuccess={fetchTransactions}
+      />
     </div>
   );
 

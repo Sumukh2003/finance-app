@@ -3,6 +3,8 @@
 import { useEffect, useState } from "react";
 import ExpensePieChart from "@/components/charts/ExpensePieChart";
 import IncomeExpenseLine from "@/components/charts/IncomeExpenseLine";
+import StatCard from "@/components/StatCard";
+import { calculateStats } from "@/lib/calcStats";
 
 type Budget = {
   category: string;
@@ -54,17 +56,25 @@ export default function DashboardPage() {
     return <div className="p-6 text-red-500">Failed to load dashboard</div>;
   }
 
-  const { income, expense, balance, budgets } = data;
+  const { budgets } = data;
+  const stats = calculateStats(data.transactions || []);
+
+  const pieData = data.categories.map((c: any) => ({
+    name: c._id, // use _id from API
+    value: Number(c.total), // use total from API
+  }));
+
+  const lineData = data.monthly.map((m: any) => ({
+    month: `${m._id.year}-${String(m._id.month).padStart(2, "0")}`, // format YYYY-MM
+    income: Number(m.income),
+    expense: Number(m.expense),
+  }));
+
+  console.log("Pie Data:", pieData);
+  console.log("Line Data:", lineData);
 
   return (
     <div className="p-6 space-y-8">
-      <h1 className="text-3xl font-bold">Dashboard</h1>
-      <input
-        type="month"
-        value={month}
-        onChange={(e) => setMonth(e.target.value)}
-        className="border px-3 py-2 rounded mb-4"
-      />
       <div className="flex justify-between items-center">
         <h1 className="text-3xl font-bold">Dashboard</h1>
         <button
@@ -77,12 +87,21 @@ export default function DashboardPage() {
           Logout
         </button>
       </div>
+      <input
+        type="month"
+        value={month}
+        onChange={(e) => setMonth(e.target.value)}
+        className="border px-3 py-2 rounded mb-4"
+      />
 
       {/* Summary Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-        <Card title="Income" value={`₹${income}`} />
-        <Card title="Expense" value={`₹${expense}`} />
-        <Card title="Balance" value={`₹${balance}`} />
+      {/* Summary Cards (Step 15) */}
+      <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
+        <StatCard title="Total Income" value={data.income} />
+        <StatCard title="Total Expense" value={data.expense} />
+        <StatCard title="Balance" value={data.balance} />
+        <StatCard title="This Month Expense" value={data.expense} />{" "}
+        {/* or filter monthly */}
       </div>
 
       {/* Budgets */}
@@ -90,8 +109,8 @@ export default function DashboardPage() {
         <h2 className="text-xl font-semibold mb-4">Budgets</h2>
 
         <div className="space-y-4">
-          {budgets.map((b: Budget) => (
-            <div key={b.category}>
+          {budgets.map((b: Budget, index: number) => (
+            <div key={`${b.category}-${index}`}>
               <div className="flex justify-between mb-1">
                 <span>{b.category}</span>
                 <span className={b.exceeded ? "text-red-500" : ""}>
@@ -131,16 +150,36 @@ export default function DashboardPage() {
         </div>
       </div>
       {/* Charts */}
+      {/* Charts */}
       <div>
         <h2 className="text-xl font-semibold mb-2">Expense Breakdown</h2>
-        {data?.categories?.length > 0 && (
-          <ExpensePieChart data={data.categories} />
+        {data.categories && data.categories.length > 0 ? (
+          <ExpensePieChart
+            data={data.categories
+              .filter((c: any) => Number(c.total) > 0)
+              .map((c: any) => ({
+                category: c._id,
+                amount: Number(c.total),
+              }))}
+          />
+        ) : (
+          <p className="text-gray-500">No expenses recorded this month.</p>
         )}
       </div>
 
       <div>
         <h2 className="text-xl font-semibold mb-2">Monthly Trend</h2>
-        {data?.monthly?.length > 0 && <IncomeExpenseLine data={data.monthly} />}
+        {data.monthly && data.monthly.length > 0 ? (
+          <IncomeExpenseLine
+            data={data.monthly.map((m: any) => ({
+              month: `${m._id.year}-${String(m._id.month).padStart(2, "0")}`, // format YYYY-MM
+              income: Number(m.income),
+              expense: Number(m.expense),
+            }))}
+          />
+        ) : (
+          <p className="text-gray-500">No transactions available.</p>
+        )}
       </div>
     </div>
   );
