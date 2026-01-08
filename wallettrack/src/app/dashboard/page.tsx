@@ -49,11 +49,20 @@ export default function DashboardPage() {
   }, [month]);
 
   if (loading) {
-    return <div className="p-6">Loading dashboard...</div>;
+    return (
+      <div className="flex items-center justify-center py-12">
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
+        <span className="ml-2 text-gray-600">Loading dashboard...</span>
+      </div>
+    );
   }
 
   if (!data?.success) {
-    return <div className="p-6 text-red-500">Failed to load dashboard</div>;
+    return (
+      <div className="text-center py-12">
+        <p className="text-red-500 text-lg">Failed to load dashboard</p>
+      </div>
+    );
   }
 
   const { budgets } = data;
@@ -74,46 +83,37 @@ export default function DashboardPage() {
   console.log("Line Data:", lineData);
 
   return (
-    <div className="p-6 space-y-8">
+    <div className="space-y-8">
       <div className="flex justify-between items-center">
-        <h1 className="text-3xl font-bold">Dashboard</h1>
-        <button
-          onClick={() => {
-            localStorage.removeItem("token");
-            window.location.href = "/login";
-          }}
-          className="text-sm bg-red-500 text-white px-4 py-2 rounded hover:bg-red-600"
-        >
-          Logout
-        </button>
+        <h1 className="text-3xl font-bold text-gray-900">Dashboard</h1>
+        <div className="flex items-center space-x-4">
+          <input
+            type="month"
+            value={month}
+            onChange={(e) => setMonth(e.target.value)}
+            className="border border-gray-300 px-3 py-2 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+          />
+        </div>
       </div>
-      <input
-        type="month"
-        value={month}
-        onChange={(e) => setMonth(e.target.value)}
-        className="border px-3 py-2 rounded mb-4"
-      />
 
       {/* Summary Cards */}
-      {/* Summary Cards (Step 15) */}
       <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
         <StatCard title="Total Income" value={data.income} />
         <StatCard title="Total Expense" value={data.expense} />
         <StatCard title="Balance" value={data.balance} />
-        <StatCard title="This Month Expense" value={data.expense} />{" "}
-        {/* or filter monthly */}
+        <StatCard title="This Month Expense" value={data.expense} />
       </div>
 
       {/* Budgets */}
-      <div>
-        <h2 className="text-xl font-semibold mb-4">Budgets</h2>
+      <div className="bg-white rounded-lg shadow p-6">
+        <h2 className="text-xl font-semibold text-gray-900 mb-4">Budgets</h2>
 
         <div className="space-y-4">
           {budgets.map((b: Budget, index: number) => (
             <div key={`${b.category}-${index}`}>
               <div className="flex justify-between mb-1">
-                <span>{b.category}</span>
-                <span className={b.exceeded ? "text-red-500" : ""}>
+                <span className="font-medium text-gray-900">{b.category}</span>
+                <span className={b.exceeded ? "text-red-500" : "text-gray-700"}>
                   ₹{b.spent} / ₹{b.limit}
                 </span>
               </div>
@@ -149,48 +149,48 @@ export default function DashboardPage() {
           ))}
         </div>
       </div>
+
       {/* Charts */}
-      {/* Charts */}
-      <div>
-        <h2 className="text-xl font-semibold mb-2">Expense Breakdown</h2>
-        {data.categories && data.categories.length > 0 ? (
-          <ExpensePieChart
-            data={data.categories
-              .filter((c: any) => Number(c.total) > 0)
-              .map((c: any) => ({
-                category: c._id,
-                amount: Number(c.total),
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+        <div className="bg-white rounded-lg shadow p-6">
+          <h2 className="text-xl font-semibold text-gray-900 mb-4">
+            Expense Breakdown
+          </h2>
+          {data.categories && data.categories.length > 0 ? (
+            <ExpensePieChart
+              data={data.categories
+                .filter((c: any) => Number(c.total) > 0)
+                .map((c: any) => ({
+                  category: c._id,
+                  amount: Number(c.total),
+                }))}
+            />
+          ) : (
+            <p className="text-gray-500 text-center py-8">
+              No expenses recorded this month.
+            </p>
+          )}
+        </div>
+
+        <div className="bg-white rounded-lg shadow p-6">
+          <h2 className="text-xl font-semibold text-gray-900 mb-4">
+            Monthly Trend
+          </h2>
+          {data.monthly && data.monthly.length > 0 ? (
+            <IncomeExpenseLine
+              data={data.monthly.map((m: any) => ({
+                month: `${m._id.year}-${String(m._id.month).padStart(2, "0")}`, // format YYYY-MM
+                income: Number(m.income),
+                expense: Number(m.expense),
               }))}
-          />
-        ) : (
-          <p className="text-gray-500">No expenses recorded this month.</p>
-        )}
+            />
+          ) : (
+            <p className="text-gray-500 text-center py-8">
+              No transactions available.
+            </p>
+          )}
+        </div>
       </div>
-
-      <div>
-        <h2 className="text-xl font-semibold mb-2">Monthly Trend</h2>
-        {data.monthly && data.monthly.length > 0 ? (
-          <IncomeExpenseLine
-            data={data.monthly.map((m: any) => ({
-              month: `${m._id.year}-${String(m._id.month).padStart(2, "0")}`, // format YYYY-MM
-              income: Number(m.income),
-              expense: Number(m.expense),
-            }))}
-          />
-        ) : (
-          <p className="text-gray-500">No transactions available.</p>
-        )}
-      </div>
-    </div>
-  );
-}
-
-/* ---------- Reusable Card ---------- */
-function Card({ title, value }: { title: string; value: string }) {
-  return (
-    <div className="bg-white rounded-lg shadow p-6">
-      <p className="text-gray-500">{title}</p>
-      <p className="text-2xl font-bold mt-2">{value}</p>
     </div>
   );
 }

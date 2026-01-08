@@ -18,19 +18,13 @@ export default function BudgetsPage() {
     category: "",
     limit: "",
   });
+  const [showForm, setShowForm] = useState(false);
 
   const token =
     typeof window !== "undefined" ? localStorage.getItem("token") : null;
 
-  useEffect(() => {
-    if (!token) {
-      window.location.href = "/login";
-      return;
-    }
-    fetchSummary();
-  }, [month]);
-
   async function fetchSummary() {
+    setLoading(true);
     const res = await fetch(`/api/budgets/summary?month=${month}`, {
       headers: {
         Authorization: `Bearer ${token}`,
@@ -42,6 +36,14 @@ export default function BudgetsPage() {
     }
     setLoading(false);
   }
+
+  useEffect(() => {
+    if (!token) {
+      window.location.href = "/login";
+      return;
+    }
+    fetchSummary();
+  }, [month]);
 
   async function addBudget(e: React.FormEvent) {
     e.preventDefault();
@@ -62,78 +64,118 @@ export default function BudgetsPage() {
     const data = await res.json();
     if (data.success) {
       setForm({ category: "", limit: "" });
+      setShowForm(false);
       fetchSummary();
     }
   }
 
-  if (loading) {
-    return <div className="p-6">Loading budgets...</div>;
-  }
-
   return (
-    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-      <div className="mb-8">
+    <div className="space-y-6">
+      <div className="flex justify-between items-center">
         <h1 className="text-3xl font-bold text-gray-900">Budgets</h1>
-        <p className="text-gray-600 mt-2">
-          Set and monitor your monthly spending limits.
-        </p>
+        <button
+          onClick={() => setShowForm(!showForm)}
+          className="bg-green-600 text-white px-4 py-2 rounded-md hover:bg-green-700 transition-colors flex items-center"
+        >
+          <svg
+            className="w-4 h-4 mr-2"
+            fill="none"
+            stroke="currentColor"
+            viewBox="0 0 24 24"
+          >
+            <path
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              strokeWidth={2}
+              d="M12 6v6m0 0v6m0-6h6m-6 0H6"
+            />
+          </svg>
+          Add Budget
+        </button>
       </div>
 
-      <div className="mb-6">
-        <input
-          type="month"
-          value={month}
-          onChange={(e) => setMonth(e.target.value)}
-          className="border border-gray-300 px-3 py-2 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-        />
+      {/* Month Selector */}
+      <div className="bg-white rounded-lg shadow p-6">
+        <div className="flex items-center space-x-4">
+          <label htmlFor="month" className="text-sm font-medium text-gray-700">
+            Select Month:
+          </label>
+          <input
+            id="month"
+            type="month"
+            value={month}
+            onChange={(e) => setMonth(e.target.value)}
+            className="border border-gray-300 px-3 py-2 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+          />
+        </div>
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-        {/* Add Budget Form */}
-        <div className="bg-white p-6 rounded-lg shadow-md">
+      {/* Add Budget Form */}
+      {showForm && (
+        <div className="bg-white rounded-lg shadow p-6">
           <h2 className="text-xl font-semibold text-gray-900 mb-4">
             Add New Budget
           </h2>
           <form onSubmit={addBudget} className="space-y-4">
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
-                Category
-              </label>
-              <input
-                placeholder="e.g., Food, Transport, Entertainment"
-                value={form.category}
-                onChange={(e) => setForm({ ...form, category: e.target.value })}
-                className="w-full border border-gray-300 px-3 py-2 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                required
-              />
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  Category
+                </label>
+                <input
+                  placeholder="e.g., Food, Transport, Entertainment"
+                  value={form.category}
+                  onChange={(e) =>
+                    setForm({ ...form, category: e.target.value })
+                  }
+                  className="w-full border border-gray-300 px-3 py-2 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  required
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  Monthly Limit (₹)
+                </label>
+                <input
+                  type="number"
+                  placeholder="Enter amount"
+                  value={form.limit}
+                  onChange={(e) => setForm({ ...form, limit: e.target.value })}
+                  className="w-full border border-gray-300 px-3 py-2 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  required
+                />
+              </div>
             </div>
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
-                Monthly Limit (₹)
-              </label>
-              <input
-                type="number"
-                placeholder="Enter amount"
-                value={form.limit}
-                onChange={(e) => setForm({ ...form, limit: e.target.value })}
-                className="w-full border border-gray-300 px-3 py-2 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                required
-              />
+            <div className="flex justify-end space-x-3">
+              <button
+                type="button"
+                onClick={() => setShowForm(false)}
+                className="px-4 py-2 border border-gray-300 rounded-md text-gray-700 hover:bg-gray-50 transition-colors"
+              >
+                Cancel
+              </button>
+              <button
+                type="submit"
+                className="px-4 py-2 bg-green-600 text-white rounded-md hover:bg-green-700 transition-colors"
+              >
+                Add Budget
+              </button>
             </div>
-            <button
-              type="submit"
-              className="w-full bg-blue-600 text-white px-4 py-2 rounded-md hover:bg-blue-700 transition-colors"
-            >
-              Add Budget
-            </button>
           </form>
         </div>
+      )}
 
-        {/* Budget Summary */}
-        <div className="bg-white p-6 rounded-lg shadow-md">
-          <h2 className="text-xl font-semibold text-gray-900 mb-4">
-            Budget Overview
-          </h2>
+      {/* Budget Summary */}
+      <div className="bg-white rounded-lg shadow p-6">
+        <h2 className="text-xl font-semibold text-gray-900 mb-4">
+          Budget Overview
+        </h2>
+        {loading ? (
+          <div className="flex items-center justify-center py-12">
+            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
+            <span className="ml-2 text-gray-600">Loading budgets...</span>
+          </div>
+        ) : (
           <div className="space-y-4">
             {summary.map((b, index) => (
               <div
@@ -158,34 +200,45 @@ export default function BudgetsPage() {
                   <div
                     className={`h-3 ${
                       b.overBudget ? "bg-red-500" : "bg-green-500"
-                    }`}
+                    } transition-all duration-300`}
                     style={{
                       width: `${Math.min((b.spent / b.limit) * 100, 100)}%`,
                     }}
                   />
                 </div>
-                <p className="text-sm text-gray-600">
-                  Remaining:{" "}
-                  <span
-                    className={
-                      b.overBudget
-                        ? "text-red-600 font-semibold"
-                        : "text-green-600"
-                    }
-                  >
-                    ₹{b.remaining.toLocaleString()}
+                <div className="flex justify-between text-sm">
+                  <span className="text-gray-600">
+                    Remaining:{" "}
+                    <span
+                      className={
+                        b.overBudget
+                          ? "text-red-600 font-semibold"
+                          : "text-green-600"
+                      }
+                    >
+                      ₹{b.remaining.toLocaleString()}
+                    </span>
                   </span>
-                  {b.overBudget && " (Over budget)"}
-                </p>
+                  {b.overBudget && (
+                    <span className="text-red-600 font-medium">
+                      Over budget
+                    </span>
+                  )}
+                </div>
               </div>
             ))}
             {summary.length === 0 && (
-              <p className="text-gray-500 text-center py-8">
-                No budgets set for this month.
-              </p>
+              <div className="text-center py-12">
+                <p className="text-gray-500 text-lg">
+                  No budgets set for this month.
+                </p>
+                <p className="text-gray-400 text-sm mt-2">
+                  Click "Add Budget" to create your first budget.
+                </p>
+              </div>
             )}
           </div>
-        </div>
+        )}
       </div>
     </div>
   );
