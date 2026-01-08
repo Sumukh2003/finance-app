@@ -3,16 +3,65 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
+import {
+  User,
+  Mail,
+  Lock,
+  Eye,
+  EyeOff,
+  Check,
+  ArrowLeft,
+  Shield,
+  Sparkles,
+  TrendingUp,
+  Wallet,
+  UserPlus,
+} from "lucide-react";
 
 export default function RegisterPage() {
   const router = useRouter();
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [confirmPassword, setConfirmPassword] = useState("");
+  const [showPassword, setShowPassword] = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
+  const [termsAccepted, setTermsAccepted] = useState(false);
+
+  const passwordRequirements = [
+    { id: 1, text: "At least 8 characters", met: password.length >= 8 },
+    { id: 2, text: "Contains a number", met: /\d/.test(password) },
+    { id: 3, text: "Contains uppercase letter", met: /[A-Z]/.test(password) },
+    { id: 4, text: "Contains lowercase letter", met: /[a-z]/.test(password) },
+    {
+      id: 5,
+      text: "Contains special character",
+      met: /[!@#$%^&*(),.?":{}|<>]/.test(password),
+    },
+  ];
+
+  const isPasswordValid = passwordRequirements.every((req) => req.met);
+  const passwordsMatch =
+    password === confirmPassword && confirmPassword.length > 0;
 
   async function register() {
+    if (!termsAccepted) {
+      setError("Please accept the terms and conditions");
+      return;
+    }
+
+    if (!isPasswordValid) {
+      setError("Password does not meet requirements");
+      return;
+    }
+
+    if (!passwordsMatch) {
+      setError("Passwords do not match");
+      return;
+    }
+
     setLoading(true);
     setError("");
 
@@ -24,7 +73,7 @@ export default function RegisterPage() {
       });
 
       if (res.ok) {
-        router.push("/login");
+        router.push("/login?registered=true");
       } else {
         const data = await res.json();
         setError(data.message || "Registration failed");
@@ -36,137 +85,387 @@ export default function RegisterPage() {
     }
   }
 
+  const benefits = [
+    { icon: Wallet, text: "Track all your finances in one place" },
+    { icon: TrendingUp, text: "Achieve your financial goals faster" },
+    { icon: Shield, text: "Bank-level security & encryption" },
+    { icon: Sparkles, text: "Personalized financial insights" },
+  ];
+
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 flex items-center justify-center py-12 px-4 sm:px-6 lg:px-8">
-      <div className="max-w-md w-full space-y-8">
-        <div>
-          <div className="mx-auto h-12 w-12 flex items-center justify-center rounded-full bg-green-100">
-            <svg
-              className="h-6 w-6 text-green-600"
-              fill="none"
-              stroke="currentColor"
-              viewBox="0 0 24 24"
-            >
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                strokeWidth={2}
-                d="M18 9v3m0 0v3m0-3h3m-3 0h-3m-2-5a4 4 0 11-8 0 4 4 0 018 0zM3 20a6 6 0 0112 0v1H3v-1z"
-              />
-            </svg>
-          </div>
-          <h2 className="mt-6 text-center text-3xl font-extrabold text-gray-900">
-            Create your account
-          </h2>
-          <p className="mt-2 text-center text-sm text-gray-600">
-            Already have an account?{" "}
-            <Link
-              href="/login"
-              className="font-medium text-blue-600 hover:text-blue-500"
-            >
-              Sign in
-            </Link>
-          </p>
-        </div>
-        <form
-          className="mt-8 space-y-6"
-          onSubmit={(e) => {
-            e.preventDefault();
-            register();
-          }}
-        >
-          <div className="space-y-4">
-            <div>
-              <label
-                htmlFor="name"
-                className="block text-sm font-medium text-gray-700"
+    <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100">
+      <div className="flex flex-col lg:flex-row min-h-screen">
+        {/* Left Column - Benefits */}
+        <div className="lg:w-1/2 bg-gradient-to-br from-green-600 to-emerald-700 text-white p-8 lg:p-12">
+          <div className="max-w-md mx-auto h-full flex flex-col justify-center">
+            <div className="mb-10">
+              <Link
+                href="/"
+                className="inline-flex items-center text-green-200 hover:text-white transition-colors mb-8"
               >
-                Full Name
-              </label>
-              <input
-                id="name"
-                name="name"
-                type="text"
-                autoComplete="name"
-                required
-                className="mt-1 appearance-none relative block w-full px-3 py-2 border border-gray-300 placeholder-gray-500 text-gray-900 rounded-md focus:outline-none focus:ring-blue-500 focus:border-blue-500 focus:z-10 sm:text-sm"
-                placeholder="Enter your full name"
-                value={name}
-                onChange={(e) => setName(e.target.value)}
-              />
-            </div>
-            <div>
-              <label
-                htmlFor="email"
-                className="block text-sm font-medium text-gray-700"
-              >
-                Email address
-              </label>
-              <input
-                id="email"
-                name="email"
-                type="email"
-                autoComplete="email"
-                required
-                className="mt-1 appearance-none relative block w-full px-3 py-2 border border-gray-300 placeholder-gray-500 text-gray-900 rounded-md focus:outline-none focus:ring-blue-500 focus:border-blue-500 focus:z-10 sm:text-sm"
-                placeholder="Enter your email"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-              />
-            </div>
-            <div>
-              <label
-                htmlFor="password"
-                className="block text-sm font-medium text-gray-700"
-              >
-                Password
-              </label>
-              <input
-                id="password"
-                name="password"
-                type="password"
-                autoComplete="new-password"
-                required
-                className="mt-1 appearance-none relative block w-full px-3 py-2 border border-gray-300 placeholder-gray-500 text-gray-900 rounded-md focus:outline-none focus:ring-blue-500 focus:border-blue-500 focus:z-10 sm:text-sm"
-                placeholder="Create a password"
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-              />
-            </div>
-          </div>
+                <ArrowLeft className="w-4 h-4 mr-2" />
+                Back to home
+              </Link>
 
-          {error && (
-            <div className="rounded-md bg-red-50 p-4">
-              <div className="text-sm text-red-700">{error}</div>
-            </div>
-          )}
-
-          <div>
-            <button
-              type="submit"
-              disabled={loading}
-              className="group relative w-full flex justify-center py-2 px-4 border border-transparent text-sm font-medium rounded-md text-white bg-green-600 hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500 disabled:opacity-50 disabled:cursor-not-allowed"
-            >
-              {loading ? (
-                <div className="flex items-center">
-                  <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
-                  Creating account...
+              <div className="flex items-center space-x-3 mb-6">
+                <div className="p-3 bg-white/20 rounded-xl">
+                  <Wallet className="w-6 h-6" />
                 </div>
-              ) : (
-                "Create account"
-              )}
-            </button>
-          </div>
+                <div>
+                  <h1 className="text-3xl font-bold">WalletTrack</h1>
+                  <p className="text-green-200">Start Your Financial Journey</p>
+                </div>
+              </div>
 
-          <div className="text-center">
-            <Link
-              href="/"
-              className="text-sm text-gray-600 hover:text-gray-900"
-            >
-              ← Back to home
-            </Link>
+              <h2 className="text-2xl font-bold mb-4">
+                Join Thousands Managing Their Finances Smarter
+              </h2>
+              <p className="text-green-200 mb-8">
+                Create your free account and take the first step towards
+                financial freedom.
+              </p>
+            </div>
+
+            <div className="space-y-6">
+              {benefits.map((benefit, index) => (
+                <div key={index} className="flex items-center space-x-3">
+                  <div className="p-2 bg-white/10 rounded-lg">
+                    <benefit.icon className="w-5 h-5" />
+                  </div>
+                  <span className="text-green-100">{benefit.text}</span>
+                </div>
+              ))}
+            </div>
+
+            <div className="mt-12 pt-8 border-t border-white/20">
+              <div className="flex items-center space-x-3">
+                <div className="p-2 bg-white/10 rounded-lg">
+                  <Shield className="w-5 h-5" />
+                </div>
+                <p className="text-green-200 text-sm">
+                  Your data is encrypted and secure. We never share your
+                  personal information.
+                </p>
+              </div>
+            </div>
           </div>
-        </form>
+        </div>
+
+        {/* Right Column - Registration Form */}
+        <div className="lg:w-1/2 p-8 lg:p-12 flex items-center justify-center">
+          <div className="max-w-md w-full">
+            <div className="lg:hidden mb-8">
+              <div className="flex items-center space-x-3">
+                <div className="p-2 bg-gradient-to-br from-green-600 to-emerald-700 rounded-lg">
+                  <Wallet className="w-5 h-5 text-white" />
+                </div>
+                <div>
+                  <h1 className="text-xl font-bold text-gray-900">
+                    WalletTrack
+                  </h1>
+                  <p className="text-gray-600 text-sm">Start Your Journey</p>
+                </div>
+              </div>
+            </div>
+
+            <div className="mb-8">
+              <h2 className="text-2xl font-bold text-gray-900 mb-2">
+                Create Your Account
+              </h2>
+              <p className="text-gray-600">
+                Join WalletTrack and take control of your finances
+              </p>
+            </div>
+
+            <form
+              className="space-y-6"
+              onSubmit={(e) => {
+                e.preventDefault();
+                register();
+              }}
+            >
+              {/* Name Field */}
+              <div>
+                <label
+                  htmlFor="name"
+                  className="block text-sm font-medium text-gray-700 mb-2"
+                >
+                  Full Name
+                </label>
+                <div className="relative">
+                  <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                    <User className="h-5 w-5 text-gray-400" />
+                  </div>
+                  <input
+                    id="name"
+                    name="name"
+                    type="text"
+                    autoComplete="name"
+                    required
+                    className="block w-full pl-10 pr-3 py-3 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-gray-400 focus:border-transparent placeholder-gray-500"
+                    placeholder="Enter your full name"
+                    value={name}
+                    onChange={(e) => setName(e.target.value)}
+                  />
+                </div>
+              </div>
+
+              {/* Email Field */}
+              <div>
+                <label
+                  htmlFor="email"
+                  className="block text-sm font-medium text-gray-700 mb-2"
+                >
+                  Email Address
+                </label>
+                <div className="relative">
+                  <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                    <Mail className="h-5 w-5 text-gray-400" />
+                  </div>
+                  <input
+                    id="email"
+                    name="email"
+                    type="email"
+                    autoComplete="email"
+                    required
+                    className="block w-full pl-10 pr-3 py-3 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-gray-400 focus:border-transparent placeholder-gray-500"
+                    placeholder="Enter your email address"
+                    value={email}
+                    onChange={(e) => setEmail(e.target.value)}
+                  />
+                </div>
+              </div>
+
+              {/* Password Field */}
+              <div>
+                <label
+                  htmlFor="password"
+                  className="block text-sm font-medium text-gray-700 mb-2"
+                >
+                  Password
+                </label>
+                <div className="relative">
+                  <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                    <Lock className="h-5 w-5 text-gray-400" />
+                  </div>
+                  <input
+                    id="password"
+                    name="password"
+                    type={showPassword ? "text" : "password"}
+                    autoComplete="new-password"
+                    required
+                    className="block w-full pl-10 pr-10 py-3 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-gray-400 focus:border-transparent placeholder-gray-500"
+                    placeholder="Create a strong password"
+                    value={password}
+                    onChange={(e) => setPassword(e.target.value)}
+                  />
+                  <button
+                    type="button"
+                    className="absolute inset-y-0 right-0 pr-3 flex items-center"
+                    onClick={() => setShowPassword(!showPassword)}
+                  >
+                    {showPassword ? (
+                      <EyeOff className="h-5 w-5 text-gray-400 hover:text-gray-600" />
+                    ) : (
+                      <Eye className="h-5 w-5 text-gray-400 hover:text-gray-600" />
+                    )}
+                  </button>
+                </div>
+              </div>
+
+              {/* Password Requirements */}
+              {password.length > 0 && (
+                <div className="bg-gray-50 border border-gray-200 rounded-xl p-4">
+                  <p className="text-sm font-medium text-gray-700 mb-2">
+                    Password Requirements
+                  </p>
+                  <div className="space-y-2">
+                    {passwordRequirements.map((req) => (
+                      <div key={req.id} className="flex items-center">
+                        <div
+                          className={`w-5 h-5 rounded-full flex items-center justify-center mr-2 ${
+                            req.met ? "bg-green-100" : "bg-gray-200"
+                          }`}
+                        >
+                          {req.met ? (
+                            <Check className="w-3 h-3 text-green-600" />
+                          ) : null}
+                        </div>
+                        <span
+                          className={`text-sm ${
+                            req.met ? "text-green-600" : "text-gray-500"
+                          }`}
+                        >
+                          {req.text}
+                        </span>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {/* Confirm Password Field */}
+              <div>
+                <label
+                  htmlFor="confirmPassword"
+                  className="block text-sm font-medium text-gray-700 mb-2"
+                >
+                  Confirm Password
+                </label>
+                <div className="relative">
+                  <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                    <Lock className="h-5 w-5 text-gray-400" />
+                  </div>
+                  <input
+                    id="confirmPassword"
+                    name="confirmPassword"
+                    type={showConfirmPassword ? "text" : "password"}
+                    autoComplete="new-password"
+                    required
+                    className={`block w-full pl-10 pr-10 py-3 border ${
+                      confirmPassword.length > 0
+                        ? passwordsMatch
+                          ? "border-green-300 focus:ring-green-400"
+                          : "border-red-300 focus:ring-red-400"
+                        : "border-gray-300 focus:ring-gray-400"
+                    } rounded-xl focus:outline-none focus:ring-2 focus:border-transparent placeholder-gray-500`}
+                    placeholder="Confirm your password"
+                    value={confirmPassword}
+                    onChange={(e) => setConfirmPassword(e.target.value)}
+                  />
+                  <div className="absolute inset-y-0 right-0 pr-3 flex items-center space-x-2">
+                    {confirmPassword.length > 0 && (
+                      <div
+                        className={`w-5 h-5 rounded-full flex items-center justify-center ${
+                          passwordsMatch ? "bg-green-100" : "bg-red-100"
+                        }`}
+                      >
+                        {passwordsMatch ? (
+                          <Check className="w-3 h-3 text-green-600" />
+                        ) : (
+                          <div className="w-2 h-2 rounded-full bg-red-500"></div>
+                        )}
+                      </div>
+                    )}
+                    <button
+                      type="button"
+                      onClick={() =>
+                        setShowConfirmPassword(!showConfirmPassword)
+                      }
+                    >
+                      {showConfirmPassword ? (
+                        <EyeOff className="h-5 w-5 text-gray-400 hover:text-gray-600" />
+                      ) : (
+                        <Eye className="h-5 w-5 text-gray-400 hover:text-gray-600" />
+                      )}
+                    </button>
+                  </div>
+                </div>
+              </div>
+
+              {/* Terms & Conditions */}
+              <div className="flex items-start">
+                <div className="flex items-center h-5">
+                  <input
+                    id="terms"
+                    name="terms"
+                    type="checkbox"
+                    checked={termsAccepted}
+                    onChange={(e) => setTermsAccepted(e.target.checked)}
+                    className="h-4 w-4 text-green-600 focus:ring-green-500 border-gray-300 rounded"
+                  />
+                </div>
+                <div className="ml-3 text-sm">
+                  <label htmlFor="terms" className="text-gray-700">
+                    I agree to the{" "}
+                    <Link
+                      href="/terms"
+                      className="text-green-600 hover:text-green-800 font-medium"
+                    >
+                      Terms of Service
+                    </Link>{" "}
+                    and{" "}
+                    <Link
+                      href="/privacy"
+                      className="text-green-600 hover:text-green-800 font-medium"
+                    >
+                      Privacy Policy
+                    </Link>
+                  </label>
+                </div>
+              </div>
+
+              {/* Error Message */}
+              {error && (
+                <div className="rounded-xl bg-red-50 border border-red-200 p-4">
+                  <div className="flex items-center">
+                    <Shield className="h-5 w-5 text-red-500 mr-2" />
+                    <span className="text-sm text-red-700 font-medium">
+                      {error}
+                    </span>
+                  </div>
+                </div>
+              )}
+
+              {/* Register Button */}
+              <button
+                type="submit"
+                disabled={
+                  loading ||
+                  !isPasswordValid ||
+                  !passwordsMatch ||
+                  !termsAccepted
+                }
+                className="w-full flex justify-center items-center py-3 px-4 border border-transparent rounded-xl font-medium text-white bg-gradient-to-r from-green-600 to-emerald-700 hover:from-green-700 hover:to-emerald-800 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-300"
+              >
+                {loading ? (
+                  <>
+                    <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-white mr-2"></div>
+                    Creating Account...
+                  </>
+                ) : (
+                  <>
+                    <UserPlus className="w-5 h-5 mr-2" />
+                    Create Account
+                  </>
+                )}
+              </button>
+
+              {/* Divider */}
+              <div className="relative">
+                <div className="absolute inset-0 flex items-center">
+                  <div className="w-full border-t border-gray-300"></div>
+                </div>
+                <div className="relative flex justify-center text-sm">
+                  <span className="px-2 bg-white text-gray-500">
+                    Already have an account?
+                  </span>
+                </div>
+              </div>
+
+              {/* Login Link */}
+              <div className="text-center">
+                <Link
+                  href="/login"
+                  className="inline-flex items-center text-sm text-gray-700 hover:text-gray-900 font-medium"
+                >
+                  Sign in to your account
+                </Link>
+              </div>
+            </form>
+
+            {/* Mobile Back Link */}
+            <div className="mt-8 text-center lg:hidden">
+              <Link
+                href="/"
+                className="inline-flex items-center text-sm text-gray-600 hover:text-gray-900"
+              >
+                <ArrowLeft className="w-4 h-4 mr-1" />
+                Back to home
+              </Link>
+            </div>
+          </div>
+        </div>
       </div>
     </div>
   );
