@@ -174,7 +174,7 @@ export default function ExpensePieChart({
 
   return (
     <div className="w-full">
-      <div className="h-64">
+      <div className="h-110">
         <ResponsiveContainer width="100%" height="100%">
           <PieChart>
             <Pie
@@ -183,7 +183,7 @@ export default function ExpensePieChart({
               cy="50%"
               labelLine={false}
               label={renderCustomizedLabel}
-              outerRadius={80}
+              outerRadius={150}
               fill="#8884d8"
               dataKey="value"
               onClick={handleClick}

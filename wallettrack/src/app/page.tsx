@@ -423,21 +423,6 @@ export default function Home() {
                   Already have an account?
                 </Link>
               </div>
-
-              <div className="flex flex-wrap justify-center gap-6 text-sm text-gray-600">
-                <div className="flex items-center">
-                  <CheckCircle className="w-4 h-4 text-green-600 mr-2" />
-                  <span>No credit card required</span>
-                </div>
-                <div className="flex items-center">
-                  <CheckCircle className="w-4 h-4 text-green-600 mr-2" />
-                  <span>14-day free trial</span>
-                </div>
-                <div className="flex items-center">
-                  <CheckCircle className="w-4 h-4 text-green-600 mr-2" />
-                  <span>Cancel anytime</span>
-                </div>
-              </div>
             </div>
           </div>
         </div>
@@ -474,18 +459,6 @@ export default function Home() {
                 className="text-gray-600 hover:text-blue-600 transition-colors"
               >
                 Contact
-              </Link>
-              <Link
-                href="/privacy"
-                className="text-gray-600 hover:text-blue-600 transition-colors"
-              >
-                Privacy
-              </Link>
-              <Link
-                href="/terms"
-                className="text-gray-600 hover:text-blue-600 transition-colors"
-              >
-                Terms
               </Link>
             </div>
 
