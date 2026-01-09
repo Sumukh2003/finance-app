@@ -24,7 +24,18 @@ import {
   RefreshCw,
 } from "lucide-react";
 
+// Define proper types
+type Budget = {
+  _id: string;
+  category: string;
+  limit: number;
+  month: string;
+  createdAt?: string;
+  updatedAt?: string;
+};
+
 type BudgetSummary = {
+  id: string; // Add this - the API now returns IDs
   category: string;
   limit: number;
   spent: number;
@@ -33,11 +44,12 @@ type BudgetSummary = {
 };
 
 type BudgetItem = BudgetSummary & {
-  id: string;
   progress: number;
+  month: string;
 };
 
 export default function BudgetsPage() {
+  const [budgets, setBudgets] = useState<Budget[]>([]);
   const [summary, setSummary] = useState<BudgetItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [month, setMonth] = useState(new Date().toISOString().slice(0, 7));
@@ -71,8 +83,25 @@ export default function BudgetsPage() {
     "Debt",
   ];
 
+  // Fetch budgets
+  async function fetchBudgets() {
+    try {
+      const res = await fetch(`/api/budgets?month=${month}`, {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
+      const data = await res.json();
+      if (data.success) {
+        setBudgets(data.budgets);
+      }
+    } catch (error) {
+      console.error("Error fetching budgets:", error);
+    }
+  }
+
+  // Fetch summary
   async function fetchSummary() {
-    setLoading(true);
     try {
       const res = await fetch(`/api/budgets/summary?month=${month}`, {
         headers: {
@@ -81,19 +110,16 @@ export default function BudgetsPage() {
       });
       const data = await res.json();
       if (data.success) {
-        const enrichedData = data.summary.map(
-          (item: BudgetSummary, index: number) => ({
-            ...item,
-            id: `${month}-${item.category}-${index}`,
-            progress: Math.min((item.spent / item.limit) * 100, 100),
-          })
-        );
+        const enrichedData = data.summary.map((item: BudgetSummary) => ({
+          ...item,
+          progress:
+            item.limit > 0 ? Math.min((item.spent / item.limit) * 100, 100) : 0,
+          month,
+        }));
         setSummary(enrichedData);
       }
     } catch (error) {
       console.error("Error fetching budget summary:", error);
-    } finally {
-      setLoading(false);
     }
   }
 
@@ -102,8 +128,20 @@ export default function BudgetsPage() {
       window.location.href = "/login";
       return;
     }
-    fetchSummary();
+    loadData();
   }, [month]);
+
+  async function loadData() {
+    setLoading(true);
+    try {
+      // Fetch budgets and summary in parallel
+      await Promise.all([fetchBudgets(), fetchSummary()]);
+    } catch (error) {
+      console.error("Error loading data:", error);
+    } finally {
+      setLoading(false);
+    }
+  }
 
   const filteredSummary = summary.filter((item) => {
     if (filter === "over") return item.overBudget;
@@ -120,9 +158,8 @@ export default function BudgetsPage() {
     e.preventDefault();
     if (!form.category || !form.limit) return;
 
-    const url =
-      editMode && editingId ? `/api/budgets/${editingId}` : "/api/budgets";
-    const method = editMode ? "PUT" : "POST";
+    const url = editMode && editingId ? `/api/budgets` : "/api/budgets";
+    const method = editMode && editingId ? "PUT" : "POST";
 
     try {
       const res = await fetch(url, {
@@ -132,6 +169,7 @@ export default function BudgetsPage() {
           Authorization: `Bearer ${token}`,
         },
         body: JSON.stringify({
+          ...(editMode && editingId && { id: editingId }),
           category: form.category,
           limit: Number(form.limit),
           month,
@@ -140,7 +178,7 @@ export default function BudgetsPage() {
       const data = await res.json();
       if (data.success) {
         resetForm();
-        fetchSummary();
+        loadData();
       }
     } catch (error) {
       console.error("Error saving budget:", error);
@@ -149,7 +187,7 @@ export default function BudgetsPage() {
 
   async function handleDelete(id: string) {
     try {
-      const res = await fetch(`/api/budgets/${id}`, {
+      const res = await fetch(`/api/budgets?id=${id}`, {
         method: "DELETE",
         headers: {
           Authorization: `Bearer ${token}`,
@@ -157,7 +195,7 @@ export default function BudgetsPage() {
       });
       const data = await res.json();
       if (data.success) {
-        fetchSummary();
+        loadData();
         setDeleteConfirm(null);
       }
     } catch (error) {
@@ -541,7 +579,7 @@ export default function BudgetsPage() {
               </div>
             ) : filteredSummary.length > 0 ? (
               viewMode === "grid" ? (
-                // Grid View
+                // Grid View - FIXED: Use budget.id directly
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                   {filteredSummary.map((budget) => (
                     <div
@@ -655,7 +693,7 @@ export default function BudgetsPage() {
                   ))}
                 </div>
               ) : (
-                // List View
+                // List View - FIXED: Use budget.id directly
                 <div className="space-y-3">
                   {filteredSummary.map((budget) => (
                     <div

@@ -95,54 +95,60 @@ export default function RegisterPage() {
   return (
     <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100">
       <div className="flex flex-col lg:flex-row min-h-screen">
-        {/* Left Column - Benefits */}
-        <div className="lg:w-1/2 bg-gradient-to-br from-green-600 to-emerald-700 text-white p-8 lg:p-12">
+        {/* Left Column - Benefits (Lighter theme) */}
+        <div className="lg:w-1/2 bg-gradient-to-br from-emerald-50 to-teal-50 p-8 lg:p-12">
           <div className="max-w-md mx-auto h-full flex flex-col justify-center">
-            <div className="mb-10">
+            <div className="mb-6">
               <Link
                 href="/"
-                className="inline-flex items-center text-green-200 hover:text-white transition-colors mb-8"
+                className="inline-flex items-center text-emerald-700 hover:text-emerald-800 transition-colors mb-4"
               >
                 <ArrowLeft className="w-4 h-4 mr-2" />
                 Back to home
               </Link>
 
-              <div className="flex items-center space-x-3 mb-6">
-                <div className="p-3 bg-white/20 rounded-xl">
-                  <Wallet className="w-6 h-6" />
+              <div className="flex items-center space-x-3 mb-4">
+                <div className="p-3 bg-gradient-to-br from-emerald-500 to-emerald-600 rounded-xl shadow-md">
+                  <Wallet className="w-6 h-6 text-white" />
                 </div>
                 <div>
-                  <h1 className="text-3xl font-bold">WalletTrack</h1>
-                  <p className="text-green-200">Start Your Financial Journey</p>
+                  <h1 className="text-3xl font-bold text-gray-800">
+                    WalletTrack
+                  </h1>
+                  <p className="text-emerald-700 font-medium">
+                    Start Your Financial Journey
+                  </p>
                 </div>
               </div>
 
-              <h2 className="text-2xl font-bold mb-4">
+              <h2 className="text-2xl font-bold text-gray-800 mb-3">
                 Join Thousands Managing Their Finances Smarter
               </h2>
-              <p className="text-green-200 mb-8">
+              <p className="text-emerald-800 mb-6">
                 Create your free account and take the first step towards
                 financial freedom.
               </p>
             </div>
 
-            <div className="space-y-6">
+            <div className="space-y-4 mb-8">
               {benefits.map((benefit, index) => (
                 <div key={index} className="flex items-center space-x-3">
-                  <div className="p-2 bg-white/10 rounded-lg">
-                    <benefit.icon className="w-5 h-5" />
+                  <div className="p-2 bg-white/80 backdrop-blur-sm rounded-lg shadow-sm">
+                    <benefit.icon className="w-5 h-5 text-emerald-600" />
                   </div>
-                  <span className="text-green-100">{benefit.text}</span>
+                  <span className="text-gray-700 font-medium">
+                    {benefit.text}
+                  </span>
                 </div>
               ))}
             </div>
 
-            <div className="mt-12 pt-8 border-t border-white/20">
+            <div className="mt-auto pt-6 border-t border-emerald-200">
               <div className="flex items-center space-x-3">
-                <div className="p-2 bg-white/10 rounded-lg">
-                  <Shield className="w-5 h-5" />
+                <div className="p-2 bg-white/80 backdrop-blur-sm rounded-lg shadow-sm">
+                  <Shield className="w-5 h-5 text-emerald-600" />
                 </div>
-                <p className="text-green-200 text-sm">
+                <p className="text-emerald-700 text-sm">
                   Your data is encrypted and secure. We never share your
                   personal information.
                 </p>
@@ -152,24 +158,26 @@ export default function RegisterPage() {
         </div>
 
         {/* Right Column - Registration Form */}
-        <div className="lg:w-1/2 p-8 lg:p-12 flex items-center justify-center">
+        <div className="lg:w-1/2 p-8 lg:p-12 flex items-center justify-center bg-white">
           <div className="max-w-md w-full">
-            <div className="lg:hidden mb-8">
+            <div className="lg:hidden mb-6">
               <div className="flex items-center space-x-3">
-                <div className="p-2 bg-gradient-to-br from-green-600 to-emerald-700 rounded-lg">
+                <div className="p-2 bg-gradient-to-br from-emerald-500 to-emerald-600 rounded-lg shadow-md">
                   <Wallet className="w-5 h-5 text-white" />
                 </div>
                 <div>
                   <h1 className="text-xl font-bold text-gray-900">
                     WalletTrack
                   </h1>
-                  <p className="text-gray-600 text-sm">Start Your Journey</p>
+                  <p className="text-emerald-600 text-sm font-medium">
+                    Start Your Journey
+                  </p>
                 </div>
               </div>
             </div>
 
-            <div className="mb-8">
-              <h2 className="text-2xl font-bold text-gray-900 mb-2">
+            <div className="mb-6">
+              <h2 className="text-2xl font-bold text-gray-800 mb-2">
                 Create Your Account
               </h2>
               <p className="text-gray-600">
@@ -178,7 +186,7 @@ export default function RegisterPage() {
             </div>
 
             <form
-              className="space-y-6"
+              className="space-y-4"
               onSubmit={(e) => {
                 e.preventDefault();
                 register();
@@ -188,7 +196,7 @@ export default function RegisterPage() {
               <div>
                 <label
                   htmlFor="name"
-                  className="block text-sm font-medium text-gray-700 mb-2"
+                  className="block text-sm font-medium text-gray-700 mb-1"
                 >
                   Full Name
                 </label>
@@ -202,7 +210,7 @@ export default function RegisterPage() {
                     type="text"
                     autoComplete="name"
                     required
-                    className="block w-full pl-10 pr-3 py-3 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-gray-400 focus:border-transparent placeholder-gray-500"
+                    className="block w-full pl-10 pr-3 py-2.5 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-transparent placeholder-gray-500 bg-white shadow-sm"
                     placeholder="Enter your full name"
                     value={name}
                     onChange={(e) => setName(e.target.value)}
@@ -214,7 +222,7 @@ export default function RegisterPage() {
               <div>
                 <label
                   htmlFor="email"
-                  className="block text-sm font-medium text-gray-700 mb-2"
+                  className="block text-sm font-medium text-gray-700 mb-1"
                 >
                   Email Address
                 </label>
@@ -228,7 +236,7 @@ export default function RegisterPage() {
                     type="email"
                     autoComplete="email"
                     required
-                    className="block w-full pl-10 pr-3 py-3 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-gray-400 focus:border-transparent placeholder-gray-500"
+                    className="block w-full pl-10 pr-3 py-2.5 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-transparent placeholder-gray-500 bg-white shadow-sm"
                     placeholder="Enter your email address"
                     value={email}
                     onChange={(e) => setEmail(e.target.value)}
@@ -240,7 +248,7 @@ export default function RegisterPage() {
               <div>
                 <label
                   htmlFor="password"
-                  className="block text-sm font-medium text-gray-700 mb-2"
+                  className="block text-sm font-medium text-gray-700 mb-1"
                 >
                   Password
                 </label>
@@ -254,7 +262,7 @@ export default function RegisterPage() {
                     type={showPassword ? "text" : "password"}
                     autoComplete="new-password"
                     required
-                    className="block w-full pl-10 pr-10 py-3 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-gray-400 focus:border-transparent placeholder-gray-500"
+                    className="block w-full pl-10 pr-10 py-2.5 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-transparent placeholder-gray-500 bg-white shadow-sm"
                     placeholder="Create a strong password"
                     value={password}
                     onChange={(e) => setPassword(e.target.value)}
@@ -275,25 +283,25 @@ export default function RegisterPage() {
 
               {/* Password Requirements */}
               {password.length > 0 && (
-                <div className="bg-gray-50 border border-gray-200 rounded-xl p-4">
-                  <p className="text-sm font-medium text-gray-700 mb-2">
+                <div className="bg-emerald-50 border border-emerald-200 rounded-xl p-3 shadow-sm">
+                  <p className="text-sm font-medium text-gray-700 mb-1">
                     Password Requirements
                   </p>
-                  <div className="space-y-2">
+                  <div className="space-y-1">
                     {passwordRequirements.map((req) => (
                       <div key={req.id} className="flex items-center">
                         <div
                           className={`w-5 h-5 rounded-full flex items-center justify-center mr-2 ${
-                            req.met ? "bg-green-100" : "bg-gray-200"
+                            req.met ? "bg-emerald-100" : "bg-gray-200"
                           }`}
                         >
                           {req.met ? (
-                            <Check className="w-3 h-3 text-green-600" />
+                            <Check className="w-3 h-3 text-emerald-600" />
                           ) : null}
                         </div>
                         <span
                           className={`text-sm ${
-                            req.met ? "text-green-600" : "text-gray-500"
+                            req.met ? "text-emerald-600" : "text-gray-500"
                           }`}
                         >
                           {req.text}
@@ -308,7 +316,7 @@ export default function RegisterPage() {
               <div>
                 <label
                   htmlFor="confirmPassword"
-                  className="block text-sm font-medium text-gray-700 mb-2"
+                  className="block text-sm font-medium text-gray-700 mb-1"
                 >
                   Confirm Password
                 </label>
@@ -322,13 +330,13 @@ export default function RegisterPage() {
                     type={showConfirmPassword ? "text" : "password"}
                     autoComplete="new-password"
                     required
-                    className={`block w-full pl-10 pr-10 py-3 border ${
+                    className={`block w-full pl-10 pr-10 py-2.5 border ${
                       confirmPassword.length > 0
                         ? passwordsMatch
-                          ? "border-green-300 focus:ring-green-400"
+                          ? "border-emerald-300 focus:ring-emerald-400"
                           : "border-red-300 focus:ring-red-400"
-                        : "border-gray-300 focus:ring-gray-400"
-                    } rounded-xl focus:outline-none focus:ring-2 focus:border-transparent placeholder-gray-500`}
+                        : "border-gray-300 focus:ring-emerald-400"
+                    } rounded-xl focus:outline-none focus:ring-2 focus:border-transparent placeholder-gray-500 bg-white shadow-sm`}
                     placeholder="Confirm your password"
                     value={confirmPassword}
                     onChange={(e) => setConfirmPassword(e.target.value)}
@@ -337,11 +345,11 @@ export default function RegisterPage() {
                     {confirmPassword.length > 0 && (
                       <div
                         className={`w-5 h-5 rounded-full flex items-center justify-center ${
-                          passwordsMatch ? "bg-green-100" : "bg-red-100"
+                          passwordsMatch ? "bg-emerald-100" : "bg-red-100"
                         }`}
                       >
                         {passwordsMatch ? (
-                          <Check className="w-3 h-3 text-green-600" />
+                          <Check className="w-3 h-3 text-emerald-600" />
                         ) : (
                           <div className="w-2 h-2 rounded-full bg-red-500"></div>
                         )}
@@ -364,7 +372,7 @@ export default function RegisterPage() {
               </div>
 
               {/* Terms & Conditions */}
-              <div className="flex items-start">
+              <div className="flex items-start pt-1">
                 <div className="flex items-center h-5">
                   <input
                     id="terms"
@@ -372,7 +380,7 @@ export default function RegisterPage() {
                     type="checkbox"
                     checked={termsAccepted}
                     onChange={(e) => setTermsAccepted(e.target.checked)}
-                    className="h-4 w-4 text-green-600 focus:ring-green-500 border-gray-300 rounded"
+                    className="h-4 w-4 text-emerald-600 focus:ring-emerald-500 border-gray-300 rounded"
                   />
                 </div>
                 <div className="ml-3 text-sm">
@@ -380,14 +388,14 @@ export default function RegisterPage() {
                     I agree to the{" "}
                     <Link
                       href="/terms"
-                      className="text-green-600 hover:text-green-800 font-medium"
+                      className="text-emerald-600 hover:text-emerald-800 font-medium"
                     >
                       Terms of Service
                     </Link>{" "}
                     and{" "}
                     <Link
                       href="/privacy"
-                      className="text-green-600 hover:text-green-800 font-medium"
+                      className="text-emerald-600 hover:text-emerald-800 font-medium"
                     >
                       Privacy Policy
                     </Link>
@@ -397,7 +405,7 @@ export default function RegisterPage() {
 
               {/* Error Message */}
               {error && (
-                <div className="rounded-xl bg-red-50 border border-red-200 p-4">
+                <div className="rounded-xl bg-red-50 border border-red-200 p-3 shadow-sm">
                   <div className="flex items-center">
                     <Shield className="h-5 w-5 text-red-500 mr-2" />
                     <span className="text-sm text-red-700 font-medium">
@@ -416,7 +424,7 @@ export default function RegisterPage() {
                   !passwordsMatch ||
                   !termsAccepted
                 }
-                className="w-full flex justify-center items-center py-3 px-4 border border-transparent rounded-xl font-medium text-white bg-gradient-to-r from-green-600 to-emerald-700 hover:from-green-700 hover:to-emerald-800 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-300"
+                className="w-full flex justify-center items-center py-2.5 px-4 border border-transparent rounded-xl font-medium text-white bg-gradient-to-r from-emerald-600 to-emerald-700 hover:from-emerald-700 hover:to-emerald-800 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-emerald-500 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-300 shadow-md hover:shadow-lg"
               >
                 {loading ? (
                   <>
@@ -444,7 +452,7 @@ export default function RegisterPage() {
               </div>
 
               {/* Login Link */}
-              <div className="text-center">
+              <div className="text-center pt-1">
                 <Link
                   href="/login"
                   className="inline-flex items-center text-sm text-gray-700 hover:text-gray-900 font-medium"
@@ -455,10 +463,10 @@ export default function RegisterPage() {
             </form>
 
             {/* Mobile Back Link */}
-            <div className="mt-8 text-center lg:hidden">
+            <div className="mt-6 text-center lg:hidden">
               <Link
                 href="/"
-                className="inline-flex items-center text-sm text-gray-600 hover:text-gray-900"
+                className="inline-flex items-center text-sm text-emerald-600 hover:text-emerald-800 font-medium"
               >
                 <ArrowLeft className="w-4 h-4 mr-1" />
                 Back to home

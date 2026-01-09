@@ -57,13 +57,15 @@ export async function GET(req: Request) {
 
     const expenseMap = new Map(expenses.map((e) => [e._id, e.spent]));
 
-    const summary = budgets.map((b) => {
-      const spent = expenseMap.get(b.category) || 0;
-      const remaining = b.limit - spent;
+    // Include budget ID in the summary
+    const summary = budgets.map((budget) => {
+      const spent = expenseMap.get(budget.category) || 0;
+      const remaining = budget.limit - spent;
 
       return {
-        category: b.category,
-        limit: b.limit,
+        id: budget._id.toString(), // Add this line - include the budget ID
+        category: budget.category,
+        limit: budget.limit,
         spent,
         remaining,
         overBudget: remaining < 0,
@@ -72,6 +74,7 @@ export async function GET(req: Request) {
 
     return NextResponse.json({ success: true, summary });
   } catch (err: any) {
+    console.error("Summary API error:", err);
     return NextResponse.json(
       { success: false, error: err.message },
       { status: 401 }
