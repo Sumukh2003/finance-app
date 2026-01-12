@@ -91,12 +91,12 @@ export default function ContactPage() {
     {
       question: "How do I get started with WalletTrack?",
       answer:
-        "Simply sign up for a free account and start tracking your expenses right away. No credit card required.",
+        "Simply sign up for a free account and start tracking your expenses right away. No hurdles!",
     },
     {
       question: "Is my financial data secure?",
       answer:
-        "Yes! We use bank-level encryption and follow best security practices. Your data is always protected.",
+        "Yes! Absolutely! We use best security practices to make sure that your data is always protected.",
     },
     {
       question: "Can I use WalletTrack on mobile?",

@@ -47,11 +47,6 @@ export default function RegisterPage() {
     password === confirmPassword && confirmPassword.length > 0;
 
   async function register() {
-    if (!termsAccepted) {
-      setError("Please accept the terms and conditions");
-      return;
-    }
-
     if (!isPasswordValid) {
       setError("Password does not meet requirements");
       return;
@@ -371,38 +366,6 @@ export default function RegisterPage() {
                 </div>
               </div>
 
-              {/* Terms & Conditions */}
-              <div className="flex items-start pt-1">
-                <div className="flex items-center h-5">
-                  <input
-                    id="terms"
-                    name="terms"
-                    type="checkbox"
-                    checked={termsAccepted}
-                    onChange={(e) => setTermsAccepted(e.target.checked)}
-                    className="h-4 w-4 text-emerald-600 focus:ring-emerald-500 border-gray-300 rounded"
-                  />
-                </div>
-                <div className="ml-3 text-sm">
-                  <label htmlFor="terms" className="text-gray-700">
-                    I agree to the{" "}
-                    <Link
-                      href="/terms"
-                      className="text-emerald-600 hover:text-emerald-800 font-medium"
-                    >
-                      Terms of Service
-                    </Link>{" "}
-                    and{" "}
-                    <Link
-                      href="/privacy"
-                      className="text-emerald-600 hover:text-emerald-800 font-medium"
-                    >
-                      Privacy Policy
-                    </Link>
-                  </label>
-                </div>
-              </div>
-
               {/* Error Message */}
               {error && (
                 <div className="rounded-xl bg-red-50 border border-red-200 p-3 shadow-sm">
@@ -418,12 +381,7 @@ export default function RegisterPage() {
               {/* Register Button */}
               <button
                 type="submit"
-                disabled={
-                  loading ||
-                  !isPasswordValid ||
-                  !passwordsMatch ||
-                  !termsAccepted
-                }
+                disabled={loading || !isPasswordValid || !passwordsMatch}
                 className="w-full flex justify-center items-center py-2.5 px-4 border border-transparent rounded-xl font-medium text-white bg-gradient-to-r from-emerald-600 to-emerald-700 hover:from-emerald-700 hover:to-emerald-800 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-emerald-500 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-300 shadow-md hover:shadow-lg"
               >
                 {loading ? (
