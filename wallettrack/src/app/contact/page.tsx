@@ -14,17 +14,19 @@ import {
   Clock,
   Users,
   CheckCircle,
+  Menu,
 } from "lucide-react";
 
 export default function ContactPage() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isSubmitted, setIsSubmitted] = useState(false);
+  const [sidebarOpen, setSidebarOpen] = useState(false);
 
   async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
     setIsSubmitting(true);
 
-    const form = e.currentTarget; // Store reference
+    const form = e.currentTarget;
     const formData = {
       name: (form.elements.namedItem("name") as HTMLInputElement).value,
       email: (form.elements.namedItem("email") as HTMLInputElement).value,
@@ -35,23 +37,15 @@ export default function ContactPage() {
     try {
       const res = await fetch("/api/contact", {
         method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
+        headers: { "Content-Type": "application/json" },
         body: JSON.stringify(formData),
       });
-
       const data = await res.json();
 
       if (data.success) {
-        // Reset form BEFORE setting success state
         form.reset();
         setIsSubmitted(true);
-
-        // Reset success message after 5 seconds
-        setTimeout(() => {
-          setIsSubmitted(false);
-        }, 5000);
+        setTimeout(() => setIsSubmitted(false), 5000);
       } else {
         alert("Failed to send message. Please try again.");
       }
@@ -62,6 +56,13 @@ export default function ContactPage() {
       setIsSubmitting(false);
     }
   }
+
+  const navLinks = [
+    { name: "Home", href: "/" },
+    { name: "About", href: "/about" },
+    { name: "Login", href: "/login" },
+    { name: "Get Started", href: "/register" },
+  ];
 
   const contactMethods = [
     {
@@ -106,9 +107,9 @@ export default function ContactPage() {
   ];
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-gray-50 to-gray-100">
+    <div className="min-h-screen bg-gradient-to-b from-gray-50 to-gray-100 relative">
       {/* Header */}
-      <header className="bg-white/90 backdrop-blur-lg border-b border-gray-200">
+      <header className="bg-white/90 backdrop-blur-lg border-b border-gray-200 fixed w-full z-50">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex justify-between items-center py-4">
             <Link href="/" className="flex items-center space-x-3">
@@ -122,45 +123,90 @@ export default function ContactPage() {
                 <p className="text-xs text-gray-500">Financial Intelligence</p>
               </div>
             </Link>
-            <nav className="flex items-center space-x-6">
-              <Link
-                href="/"
-                className="text-gray-700 hover:text-blue-600 font-medium px-3 py-2 hover:bg-gray-50 rounded-lg transition-colors"
-              >
-                Home
-              </Link>
-              <Link
-                href="/about"
-                className="text-gray-700 hover:text-blue-600 font-medium px-3 py-2 hover:bg-gray-50 rounded-lg transition-colors"
-              >
-                About
-              </Link>
-              <Link
-                href="/contact"
-                className="text-blue-600 font-medium px-3 py-2 bg-blue-50 rounded-lg"
-              >
-                Contact
-              </Link>
-              <Link
-                href="/login"
-                className="bg-gradient-to-r from-blue-500 to-blue-600 text-white px-5 py-2.5 rounded-xl hover:from-blue-600 hover:to-blue-700 transition-all duration-300 font-medium shadow-sm hover:shadow"
-              >
-                Get Started
-                <ArrowRight className="w-4 h-4 ml-2 inline" />
-              </Link>
+
+            {/* Desktop Nav */}
+            <nav className="hidden md:flex items-center space-x-6">
+              {navLinks.map((link) => (
+                <Link
+                  key={link.name}
+                  href={link.href}
+                  className={`${
+                    link.name === "Get Started"
+                      ? "bg-gradient-to-r from-blue-500 to-blue-600 text-white px-5 py-2.5 rounded-xl hover:from-blue-600 hover:to-blue-700 transition-all duration-300 font-medium shadow-sm hover:shadow flex items-center"
+                      : "text-gray-700 hover:text-blue-600 font-medium px-3 py-2 hover:bg-gray-50 rounded-lg transition-colors"
+                  }`}
+                >
+                  {link.name}
+                  {link.name === "Get Started" && (
+                    <ArrowRight className="w-4 h-4 ml-2 inline" />
+                  )}
+                </Link>
+              ))}
             </nav>
+
+            {/* Mobile Menu Button */}
+            <button
+              className="md:hidden p-2 rounded-lg hover:bg-gray-100"
+              onClick={() => setSidebarOpen(true)}
+            >
+              <Menu className="w-6 h-6 text-black-600" />
+            </button>
           </div>
         </div>
       </header>
+
+      {/* Mobile Sidebar Overlay */}
+      {sidebarOpen && (
+        <div
+          className="fixed inset-0 bg-black/40 backdrop-blur-sm z-40"
+          onClick={() => setSidebarOpen(false)}
+        />
+      )}
+
+      {/* Right Sidebar */}
+      <aside
+        className={`fixed top-0 right-0 h-full bg-white shadow-xl z-50 transform transition-transform duration-300 ease-in-out w-[70%] ${
+          sidebarOpen ? "translate-x-0" : "translate-x-full"
+        }`}
+      >
+        {/* Header */}
+        <div className="relative flex items-center justify-center px-4 py-4 border-b">
+          <span className="text-xl font-bold">Menu</span>
+          <button
+            onClick={() => setSidebarOpen(false)}
+            className="absolute right-4"
+          >
+            <ArrowRight className="w-6 h-6 rotate-180" />
+          </button>
+        </div>
+
+        {/* Nav Links */}
+        <nav className="flex flex-col items-center space-y-6 p-6">
+          {navLinks.map((link) => (
+            <Link
+              key={link.name}
+              href={link.href}
+              onClick={() => setSidebarOpen(false)}
+              className={`w-full max-w-[240px] text-center ${
+                link.name === "Get Started"
+                  ? "bg-gradient-to-r from-blue-500 to-blue-600 text-white px-6 py-3 rounded-xl font-medium flex items-center justify-center hover:from-blue-600 hover:to-blue-700 transition-all"
+                  : "text-gray-700 text-lg font-medium hover:text-blue-600 transition-colors"
+              }`}
+            >
+              {link.name}
+              {link.name === "Get Started" && (
+                <ArrowRight className="w-4 h-4 ml-2" />
+              )}
+            </Link>
+          ))}
+        </nav>
+      </aside>
 
       {/* Hero Section */}
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-16 pb-20">
         <div className="text-center">
           <div className="inline-flex items-center px-4 py-2 rounded-full bg-blue-50 border border-blue-100 mb-6">
-            <MessageSquare className="w-4 h-4 text-blue-600 mr-2" />
-            <span className="text-sm font-medium text-blue-700">
-              We're Here to Help • 24/7 Support
-            </span>
+            <span className="text-sm font-medium text-blue-700"></span>
           </div>
 
           <h1 className="text-5xl md:text-6xl font-bold text-gray-900 mb-6">
