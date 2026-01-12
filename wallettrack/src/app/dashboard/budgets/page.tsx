@@ -464,34 +464,36 @@ export default function BudgetsPage() {
           </div>
         </div>
 
-        {/* Budget Form */}
+        {/* Budget Create / Edit Modal */}
         {showForm && (
-          <div className="bg-white rounded-xl border border-gray-200 p-6 mb-6">
-            <div className="flex items-center justify-between mb-5">
-              <h2 className="text-lg font-bold text-gray-900">
-                {editMode ? "Edit Budget" : "Create New Budget"}
-              </h2>
-              <button
-                onClick={resetForm}
-                className="p-2 hover:bg-gray-100 rounded-lg transition-colors"
-              >
-                <X className="w-5 h-5" />
-              </button>
-            </div>
+          <div className="fixed inset-0 bg-black/50 flex items-center justify-center p-4 z-50">
+            <div className="bg-white rounded-xl p-6 max-w-lg w-full shadow-xl">
+              {/* Header */}
+              <div className="flex items-center justify-between mb-5">
+                <h2 className="text-lg font-bold text-gray-900">
+                  {editMode ? "Edit Budget" : "Create New Budget"}
+                </h2>
+                <button
+                  onClick={resetForm}
+                  className="p-2 hover:bg-gray-100 rounded-lg"
+                >
+                  <X className="w-5 h-5" />
+                </button>
+              </div>
 
-            <form onSubmit={handleSubmit} className="space-y-5">
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+              {/* Form */}
+              <form onSubmit={handleSubmit} className="space-y-5">
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-2">
                     Category
                   </label>
                   <input
-                    placeholder="e.g., Food, Transportation, Entertainment"
                     value={form.category}
                     onChange={(e) =>
                       setForm({ ...form, category: e.target.value })
                     }
-                    className="w-full border border-gray-300 px-4 py-3 rounded-lg focus:outline-none focus:ring-2 focus:ring-gray-400 focus:border-transparent"
+                    placeholder="e.g. Food, Transport"
+                    className="w-full border border-gray-300 px-4 py-3 rounded-lg focus:ring-2 focus:ring-gray-400"
                     required
                     list="categorySuggestions"
                   />
@@ -507,40 +509,40 @@ export default function BudgetsPage() {
                     Monthly Limit
                   </label>
                   <div className="relative">
-                    <span className="absolute left-4 top-1/2 transform -translate-y-1/2 text-gray-500">
+                    <span className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-500">
                       ₹
                     </span>
                     <input
                       type="number"
-                      placeholder="0"
+                      min="0"
                       value={form.limit}
                       onChange={(e) =>
                         setForm({ ...form, limit: e.target.value })
                       }
-                      className="w-full border border-gray-300 px-4 py-3 pl-8 rounded-lg focus:outline-none focus:ring-2 focus:ring-gray-400 focus:border-transparent"
+                      className="w-full border border-gray-300 px-4 py-3 pl-8 rounded-lg focus:ring-2 focus:ring-gray-400"
                       required
-                      min="0"
                     />
                   </div>
                 </div>
-              </div>
 
-              <div className="flex justify-end space-x-3 pt-4">
-                <button
-                  type="button"
-                  onClick={resetForm}
-                  className="px-5 py-2.5 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50 transition-colors font-medium"
-                >
-                  Cancel
-                </button>
-                <button
-                  type="submit"
-                  className="px-5 py-2.5 bg-gradient-to-r from-gray-900 to-gray-800 text-white rounded-lg hover:from-gray-800 hover:to-gray-700 transition-all font-medium"
-                >
-                  {editMode ? "Update Budget" : "Create Budget"}
-                </button>
-              </div>
-            </form>
+                {/* Actions */}
+                <div className="flex justify-end space-x-3 pt-4">
+                  <button
+                    type="button"
+                    onClick={resetForm}
+                    className="px-5 py-2.5 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50"
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    type="submit"
+                    className="px-5 py-2.5 bg-gradient-to-r from-gray-900 to-gray-800 text-white rounded-lg hover:from-gray-800 hover:to-gray-700"
+                  >
+                    {editMode ? "Update Budget" : "Create Budget"}
+                  </button>
+                </div>
+              </form>
+            </div>
           </div>
         )}
 

@@ -40,6 +40,7 @@ export default function ExpensePieChart({
     name: item.category,
     value: item.amount,
   }));
+  const totalAmount = chartData.reduce((sum, item) => sum + item.value, 0);
 
   const handleClick = (data: any, index: number) => {
     if (onCategorySelect) {
@@ -93,11 +94,9 @@ export default function ExpensePieChart({
             Amount: ₹{data.value.toLocaleString()}
           </p>
           <p className="text-sm text-gray-600">
-            {(
-              (data.value /
-                chartData.reduce((sum, item) => sum + item.value, 0)) *
-              100
-            ).toFixed(1)}
+            {totalAmount > 0
+              ? ((data.value / totalAmount) * 100).toFixed(1)
+              : "0"}
             %
           </p>
         </div>
@@ -233,9 +232,7 @@ export default function ExpensePieChart({
               .map((entry, index) => {
                 const isSelected = selectedCategory === entry.name;
                 const percentage =
-                  (entry.value /
-                    chartData.reduce((sum, item) => sum + item.value, 0)) *
-                  100;
+                  totalAmount > 0 ? (entry.value / totalAmount) * 100 : 0;
 
                 return (
                   <div

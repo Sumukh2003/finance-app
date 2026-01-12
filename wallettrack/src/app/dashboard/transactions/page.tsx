@@ -247,11 +247,18 @@ export default function TransactionsPage() {
             <div className="flex items-center space-x-3 mt-4 md:mt-0">
               <button
                 onClick={() => exportTransactionsCSV(transactions)}
-                className="px-4 py-3 border border-gray-300 rounded-xl text-gray-700 hover:bg-gray-50 transition-all flex items-center font-medium"
+                disabled={transactions.length === 0}
+                className={`px-4 py-3 border rounded-xl font-medium flex items-center transition-all
+    ${
+      transactions.length === 0
+        ? "border-gray-200 text-gray-400 cursor-not-allowed bg-gray-50"
+        : "border-gray-300 text-gray-700 hover:bg-gray-50"
+    }`}
               >
                 <Download className="w-4 h-4 mr-2" />
                 Export CSV
               </button>
+
               <button
                 onClick={() => setOpen(true)}
                 className="px-4 py-3 bg-gradient-to-r from-gray-900 to-gray-800 text-white rounded-xl hover:from-gray-800 hover:to-gray-700 transition-all flex items-center font-medium"

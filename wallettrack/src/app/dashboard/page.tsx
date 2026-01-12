@@ -176,12 +176,9 @@ export default function DashboardPage() {
       ? budgets.reduce((sum, b) => sum + b.progress, 0) / totalBudgets
       : 0;
 
-  const topCategory =
-    data?.categories && data.categories.length > 0
-      ? data.categories.reduce((prev, current) =>
-          Number(current.total) > Number(prev.total) ? current : prev
-        )
-      : null;
+  const topCategory = data?.categories?.length
+    ? [...data.categories].sort((a, b) => Number(b.total) - Number(a.total))[0]
+    : null;
 
   if (loading) {
     return (

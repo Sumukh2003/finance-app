@@ -194,12 +194,6 @@ export default function LoginPage() {
                   >
                     Password
                   </label>
-                  <Link
-                    href="/forgot-password"
-                    className="text-sm text-blue-600 hover:text-blue-800 font-medium"
-                  >
-                    Forgot password?
-                  </Link>
                 </div>
                 <div className="relative">
                   <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
@@ -228,24 +222,6 @@ export default function LoginPage() {
                     )}
                   </button>
                 </div>
-              </div>
-
-              {/* Remember Me Checkbox */}
-              <div className="flex items-center pt-1">
-                <input
-                  id="remember-me"
-                  name="remember-me"
-                  type="checkbox"
-                  checked={rememberMe}
-                  onChange={(e) => setRememberMe(e.target.checked)}
-                  className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
-                />
-                <label
-                  htmlFor="remember-me"
-                  className="ml-2 block text-sm text-gray-700"
-                >
-                  Remember me
-                </label>
               </div>
 
               {/* Error Message */}
