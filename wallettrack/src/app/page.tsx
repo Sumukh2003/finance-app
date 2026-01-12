@@ -1,3 +1,4 @@
+"use client";
 import Link from "next/link";
 import {
   TrendingUp,
@@ -19,9 +20,12 @@ import {
   Zap,
   Bell,
   TrendingDown,
+  Menu,
 } from "lucide-react";
+import { useState } from "react";
 
 export default function Home() {
+  const [sidebarOpen, setSidebarOpen] = useState(false);
   const features = [
     {
       icon: CreditCard,
@@ -135,9 +139,9 @@ export default function Home() {
   ];
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-gray-50 to-gray-100">
+    <div className="min-h-screen bg-gradient-to-b from-gray-50 to-gray-100 relative">
       {/* Header */}
-      <header className="bg-white/90 backdrop-blur-lg border-b border-gray-200">
+      <header className="bg-white/90 backdrop-blur-lg border-b border-gray-200 fixed w-full z-50">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex justify-between items-center py-4">
             <div className="flex items-center space-x-3">
@@ -151,7 +155,9 @@ export default function Home() {
                 <p className="text-xs text-gray-500">Financial Intelligence</p>
               </div>
             </div>
-            <nav className="flex items-center space-x-6">
+
+            {/* Desktop nav */}
+            <nav className="hidden md:flex items-center space-x-6">
               <Link
                 href="/login"
                 className="text-gray-700 hover:text-blue-600 font-medium px-3 py-2 hover:bg-gray-50 rounded-lg transition-colors"
@@ -166,9 +172,58 @@ export default function Home() {
                 <ArrowRight className="w-4 h-4 ml-2 inline" />
               </Link>
             </nav>
+
+            {/* Mobile menu button */}
+            <button
+              className="md:hidden p-2 rounded-lg hover:bg-gray-100"
+              onClick={() => setSidebarOpen(true)}
+            >
+              <Menu className="w-6 h-6 text-black-600" />
+            </button>
           </div>
         </div>
       </header>
+
+      {/* Overlay */}
+      {sidebarOpen && (
+        <div
+          className="fixed inset-0 bg-black/40 backdrop-blur-sm z-40"
+          onClick={() => setSidebarOpen(false)}
+        />
+      )}
+
+      {/* Right Sidebar */}
+      <aside
+        className={`fixed top-0 right-0 h-full bg-white shadow-xl z-50 transform transition-transform duration-300 ease-in-out w-[70%] ${
+          sidebarOpen ? "translate-x-0" : "translate-x-full"
+        }`}
+      >
+        <div className="flex items-center justify-between p-4 border-b">
+          <span className="text-xl font-bold">Menu</span>
+          <button onClick={() => setSidebarOpen(false)}>
+            <ArrowRight className="w-6 h-6 rotate-180" />
+          </button>
+        </div>
+
+        {/* Center horizontally */}
+        <nav className="flex flex-col items-center p-4 space-y-4">
+          <Link
+            href="/login"
+            onClick={() => setSidebarOpen(false)}
+            className="text-gray-700 text-lg font-medium text-center hover:text-blue-600"
+          >
+            Login
+          </Link>
+
+          <Link
+            href="/register"
+            onClick={() => setSidebarOpen(false)}
+            className="w-full max-w-[220px] bg-gradient-to-r from-blue-500 to-blue-600 text-white px-5 py-2 rounded-xl text-center font-medium hover:from-blue-600 hover:to-blue-700 transition-all duration-300"
+          >
+            Get Started
+          </Link>
+        </nav>
+      </aside>
 
       {/* Hero Section */}
       <main className="pt-12 pb-16">
