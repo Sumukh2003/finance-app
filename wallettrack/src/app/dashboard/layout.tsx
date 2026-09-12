@@ -1,42 +1,46 @@
-"use client";
+import { redirect } from "next/navigation";
 
-import { useEffect } from "react";
-import { useRouter } from "next/navigation";
-import Header from "@/components/Header";
+import { AppShell } from "@/components/layout/app-shell";
+import { SessionProvider, type SessionUser } from "@/components/providers";
+import { getSession } from "@/lib/auth/session";
+import { connectDB } from "@/lib/db";
+import { User } from "@/models/User";
+import type { CurrencyCode } from "@/lib/format";
 
-export default function DashboardLayout({
+/**
+ * Authenticated shell for every dashboard route.
+ *
+ * The session is resolved on the server, so a protected page never renders
+ * before the check completes. The previous version asked the browser to fetch
+ * the session after mount, which meant private markup was painted first and
+ * only then replaced by a redirect.
+ */
+export default async function DashboardLayout({
   children,
 }: {
   children: React.ReactNode;
 }) {
-  const router = useRouter();
+  const session = await getSession();
 
-  useEffect(() => {
-    const token = localStorage.getItem("token");
+  // The proxy already redirects unauthenticated visitors; this is the
+  // belt-and-braces check that also covers a token for a deleted account.
+  if (!session) redirect("/login");
 
-    if (!token) {
-      router.replace("/login");
-      return;
-    }
+  await connectDB();
+  const record = await User.findById(session.userId).lean();
 
-    fetch("/api/dashboard", {
-      headers: {
-        Authorization: `Bearer ${token}`,
-      },
-    }).then((res) => {
-      if (!res.ok) {
-        localStorage.removeItem("token");
-        router.replace("/login");
-      }
-    });
-  }, [router]);
+  if (!record) redirect("/login");
+
+  const user: SessionUser = {
+    id: record._id.toString(),
+    name: record.name,
+    email: record.email,
+    currency: (record.currency ?? "INR") as CurrencyCode,
+  };
 
   return (
-    <div className="min-h-screen bg-gray-50">
-      <Header />
-      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        {children}
-      </main>
-    </div>
+    <SessionProvider user={user}>
+      <AppShell>{children}</AppShell>
+    </SessionProvider>
   );
 }

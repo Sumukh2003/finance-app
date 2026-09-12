@@ -1,434 +1,200 @@
 "use client";
 
-import { useState } from "react";
-import Link from "next/link";
+import * as React from "react";
+import { useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { AlertCircle, CheckCircle2, Mail, MessageSquare } from "lucide-react";
+
+import { Button } from "@/components/ui/button";
 import {
-  Wallet,
-  Mail,
-  Phone,
-  MapPin,
-  Send,
-  Sparkles,
-  ArrowRight,
-  MessageSquare,
-  Clock,
-  Users,
-  CheckCircle,
-  Menu,
-} from "lucide-react";
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
+import { Field } from "@/components/ui/field";
+import { Input, Textarea } from "@/components/ui/input";
+import { SiteFooter, SiteHeader } from "@/components/layout/site-chrome";
+import { api, applyFieldErrors, errorMessage } from "@/lib/api-client";
+import { contactSchema, type ContactInput } from "@/lib/validations/contact";
+
+const FAQS = [
+  {
+    question: "Is WalletTrack free?",
+    answer:
+      "Yes. It is an open-source project with no paid tier, no trial and no card required.",
+  },
+  {
+    question: "Do you connect to my bank?",
+    answer:
+      "No. Transactions are entered manually, which means the app never needs your banking credentials.",
+  },
+  {
+    question: "Can I get my data out?",
+    answer:
+      "Any time. The transactions page exports exactly what your filters match as a CSV file.",
+  },
+  {
+    question: "Which currencies are supported?",
+    answer:
+      "Eight, including INR, USD, EUR and GBP. Change it any time under Settings.",
+  },
+] as const;
 
 export default function ContactPage() {
-  const [isSubmitting, setIsSubmitting] = useState(false);
-  const [isSubmitted, setIsSubmitted] = useState(false);
-  const [sidebarOpen, setSidebarOpen] = useState(false);
+  const [sent, setSent] = React.useState(false);
+  const [formError, setFormError] = React.useState<string | null>(null);
 
-  async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
-    e.preventDefault();
-    setIsSubmitting(true);
+  const {
+    register,
+    handleSubmit,
+    reset,
+    setError,
+    formState: { errors, isSubmitting },
+  } = useForm<ContactInput>({
+    resolver: zodResolver(contactSchema),
+    defaultValues: { name: "", email: "", subject: "", message: "" },
+  });
 
-    const form = e.currentTarget;
-    const formData = {
-      name: (form.elements.namedItem("name") as HTMLInputElement).value,
-      email: (form.elements.namedItem("email") as HTMLInputElement).value,
-      message: (form.elements.namedItem("message") as HTMLTextAreaElement)
-        .value,
-    };
+  async function onSubmit(values: ContactInput) {
+    setFormError(null);
 
     try {
-      const res = await fetch("/api/contact", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(formData),
-      });
-      const data = await res.json();
-
-      if (data.success) {
-        form.reset();
-        setIsSubmitted(true);
-        setTimeout(() => setIsSubmitted(false), 5000);
-      } else {
-        alert("Failed to send message. Please try again.");
+      await api.post("/api/contact", values);
+      setSent(true);
+      reset();
+    } catch (error) {
+      if (!applyFieldErrors(error, setError as never)) {
+        setFormError(errorMessage(error));
       }
-    } catch (err) {
-      console.error(err);
-      alert("An error occurred. Please try again.");
-    } finally {
-      setIsSubmitting(false);
     }
   }
 
-  const navLinks = [
-    { name: "Home", href: "/" },
-    { name: "About", href: "/about" },
-    { name: "Login", href: "/login" },
-    { name: "Get Started", href: "/register" },
-  ];
-
-  const contactMethods = [
-    {
-      icon: Mail,
-      title: "Email Us",
-      details: "sumukh282003@gmail.com",
-      description: "We typically respond as soon as possible",
-      color: "from-blue-500 to-blue-600",
-    },
-    {
-      icon: Phone,
-      title: "Call Us",
-      details: "+91 8217739781",
-      description: "We typically respond as soon as possible",
-      color: "from-green-500 to-green-600",
-    },
-    {
-      icon: MapPin,
-      title: "Location",
-      details: "India",
-      description: "Serving users worldwide",
-      color: "from-purple-500 to-purple-600",
-    },
-  ];
-
-  const faqs = [
-    {
-      question: "How do I get started with WalletTrack?",
-      answer:
-        "Simply sign up for a free account and start tracking your expenses right away. No hurdles!",
-    },
-    {
-      question: "Is my financial data secure?",
-      answer:
-        "Yes! Absolutely! We use best security practices to make sure that your data is always protected.",
-    },
-    {
-      question: "Can I use WalletTrack on mobile?",
-      answer:
-        "Yes! Our web app is fully responsive and works perfectly on all mobile devices.",
-    },
-  ];
-
   return (
-    <div className="min-h-screen bg-gradient-to-b from-gray-50 to-gray-100 relative">
-      {/* Header */}
-      <header className="bg-white/90 backdrop-blur-lg border-b border-gray-200 fixed w-full z-50">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex justify-between items-center py-4">
-            <Link href="/" className="flex items-center space-x-3">
-              <div className="p-2 bg-gradient-to-br from-blue-500 to-blue-600 rounded-xl shadow-sm">
-                <Wallet className="w-6 h-6 text-white" />
-              </div>
-              <div>
-                <h1 className="text-2xl font-bold text-gray-900">
-                  WalletTrack
-                </h1>
-                <p className="text-xs text-gray-500">Financial Intelligence</p>
-              </div>
-            </Link>
+    <div className="flex min-h-dvh flex-col">
+      <SiteHeader />
 
-            {/* Desktop Nav */}
-            <nav className="hidden md:flex items-center space-x-6">
-              {navLinks.map((link) => (
-                <Link
-                  key={link.name}
-                  href={link.href}
-                  className={`${
-                    link.name === "Get Started"
-                      ? "bg-gradient-to-r from-blue-500 to-blue-600 text-white px-5 py-2.5 rounded-xl hover:from-blue-600 hover:to-blue-700 transition-all duration-300 font-medium shadow-sm hover:shadow flex items-center"
-                      : "text-gray-700 hover:text-blue-600 font-medium px-3 py-2 hover:bg-gray-50 rounded-lg transition-colors"
-                  }`}
-                >
-                  {link.name}
-                  {link.name === "Get Started" && (
-                    <ArrowRight className="w-4 h-4 ml-2 inline" />
-                  )}
-                </Link>
-              ))}
-            </nav>
-
-            {/* Mobile Menu Button */}
-            <button
-              className="md:hidden p-2 rounded-lg hover:bg-gray-100"
-              onClick={() => setSidebarOpen(true)}
-            >
-              <Menu className="w-6 h-6 text-black-600" />
-            </button>
-          </div>
-        </div>
-      </header>
-
-      {/* Mobile Sidebar Overlay */}
-      {sidebarOpen && (
-        <div
-          className="fixed inset-0 bg-black/40 backdrop-blur-sm z-40"
-          onClick={() => setSidebarOpen(false)}
-        />
-      )}
-
-      {/* Right Sidebar */}
-      <aside
-        className={`fixed top-0 right-0 h-full bg-white shadow-xl z-50 transform transition-transform duration-300 ease-in-out w-[70%] ${
-          sidebarOpen ? "translate-x-0" : "translate-x-full"
-        }`}
-      >
-        {/* Header */}
-        <div className="relative flex items-center justify-center px-4 py-4 border-b">
-          <span className="text-xl font-bold">Menu</span>
-          <button
-            onClick={() => setSidebarOpen(false)}
-            className="absolute right-4"
-          >
-            <ArrowRight className="w-6 h-6 rotate-180" />
-          </button>
-        </div>
-
-        {/* Nav Links */}
-        <nav className="flex flex-col items-center space-y-6 p-6">
-          {navLinks.map((link) => (
-            <Link
-              key={link.name}
-              href={link.href}
-              onClick={() => setSidebarOpen(false)}
-              className={`w-full max-w-[240px] text-center ${
-                link.name === "Get Started"
-                  ? "bg-gradient-to-r from-blue-500 to-blue-600 text-white px-6 py-3 rounded-xl font-medium flex items-center justify-center hover:from-blue-600 hover:to-blue-700 transition-all"
-                  : "text-gray-700 text-lg font-medium hover:text-blue-600 transition-colors"
-              }`}
-            >
-              {link.name}
-              {link.name === "Get Started" && (
-                <ArrowRight className="w-4 h-4 ml-2" />
-              )}
-            </Link>
-          ))}
-        </nav>
-      </aside>
-
-      {/* Hero Section */}
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-16 pb-20">
-        <div className="text-center">
-          <div className="inline-flex items-center px-4 py-2 rounded-full bg-blue-50 border border-blue-100 mb-6">
-            <span className="text-sm font-medium text-blue-700"></span>
-          </div>
-
-          <h1 className="text-5xl md:text-6xl font-bold text-gray-900 mb-6">
-            Get in
-            <span className="block text-blue-600">Touch</span>
-          </h1>
-
-          <p className="text-xl text-gray-600 mb-10 max-w-3xl mx-auto leading-relaxed">
-            Have questions about WalletTrack? Need help with your account? Our
-            team is ready to assist you on your financial journey.
-          </p>
-        </div>
-      </div>
-
-      {/* Contact Methods */}
-      <div className="py-8 bg-white">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-            {contactMethods.map((method, index) => (
-              <div
-                key={index}
-                className="bg-gradient-to-b from-white to-gray-50 rounded-2xl border border-gray-200 p-8 text-center hover:border-blue-200 transition-all duration-300"
-              >
-                <div className="inline-flex items-center justify-center w-16 h-16 rounded-xl bg-gradient-to-br from-blue-50 to-blue-100 mb-6">
-                  <div
-                    className={`bg-gradient-to-br ${method.color} p-3 rounded-lg`}
-                  >
-                    <method.icon className="w-6 h-6 text-white" />
-                  </div>
-                </div>
-                <h3 className="text-xl font-bold text-gray-900 mb-2">
-                  {method.title}
-                </h3>
-                <div className="text-lg font-medium text-blue-600 mb-2">
-                  {method.details}
-                </div>
-                <p className="text-gray-600 text-sm">{method.description}</p>
-              </div>
-            ))}
-          </div>
-        </div>
-      </div>
-
-      {/* Contact Form & FAQ */}
-      <div className="py-8">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-10">
-            {/* Contact Form */}
-            <div className="bg-white rounded-2xl border border-gray-200 p-7 shadow-sm flex flex-col">
-              <div className="flex items-center mb-6">
-                <div className="p-2 bg-gradient-to-br from-blue-500 to-blue-600 rounded-lg mr-3">
-                  <Send className="w-5 h-5 text-white" />
-                </div>
-                <div>
-                  <h2 className="text-xl font-bold text-gray-900">
-                    Send us a Message
-                  </h2>
-                  <p className="text-gray-600 text-sm">
-                    Fill out the form below and we'll get back to you ASAP
-                  </p>
-                </div>
-              </div>
-
-              {isSubmitted ? (
-                <div className="text-center py-10 flex-grow flex flex-col items-center justify-center">
-                  <div className="inline-flex items-center justify-center w-14 h-14 bg-green-50 rounded-full mb-4">
-                    <CheckCircle className="w-6 h-6 text-green-600" />
-                  </div>
-                  <h3 className="text-xl font-bold text-gray-900 mb-2">
-                    Message Sent Successfully!
-                  </h3>
-                  <p className="text-gray-600 text-sm">
-                    Thank you for contacting us. We'll get back to you within 24
-                    hours.
-                  </p>
-                </div>
-              ) : (
-                <form
-                  onSubmit={handleSubmit}
-                  className="space-y-5 flex-grow flex flex-col"
-                >
-                  <div className="space-y-5">
-                    <div>
-                      <input
-                        type="text"
-                        name="name"
-                        placeholder="Your Name *"
-                        required
-                        className="w-full border border-gray-300 px-4 py-3 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm"
-                      />
-                    </div>
-
-                    <div>
-                      <input
-                        type="email"
-                        name="email"
-                        placeholder="Email Address *"
-                        required
-                        className="w-full border border-gray-300 px-4 py-3 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm"
-                      />
-                    </div>
-
-                    <div className="flex-grow">
-                      <textarea
-                        name="message"
-                        placeholder="Your Message *"
-                        required
-                        className="w-full border border-gray-300 px-4 py-3 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm h-full min-h-[140px]"
-                      />
-                    </div>
-                  </div>
-
-                  <div className="mt-auto pt-3">
-                    <button
-                      type="submit"
-                      disabled={isSubmitting}
-                      className="w-full bg-gradient-to-r from-blue-500 to-blue-600 text-white py-3.5 rounded-lg font-semibold hover:from-blue-600 hover:to-blue-700 transition-all duration-300 shadow-sm hover:shadow disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center text-sm"
-                    >
-                      {isSubmitting ? (
-                        <>
-                          <div className="animate-spin rounded-full h-4 w-4 border-2 border-white border-t-transparent mr-2"></div>
-                          Sending...
-                        </>
-                      ) : (
-                        <>
-                          <Send className="w-4 h-4 mr-2" />
-                          Send Message
-                        </>
-                      )}
-                    </button>
-                  </div>
-                </form>
-              )}
-            </div>
-
-            {/* FAQ Section */}
-            <div className="flex flex-col">
-              <div className="bg-white rounded-2xl border border-gray-200 p-7 shadow-sm flex flex-col h-full">
-                <div className="flex items-center mb-6">
-                  <div className="p-2 bg-gradient-to-br from-green-500 to-green-600 rounded-lg mr-3">
-                    <MessageSquare className="w-5 h-5 text-white" />
-                  </div>
-                  <div>
-                    <h2 className="text-xl font-bold text-gray-900">
-                      Frequently Asked Questions
-                    </h2>
-                    <p className="text-gray-600 text-sm">
-                      Quick answers to common questions
-                    </p>
-                  </div>
-                </div>
-
-                <div className="space-y-4 flex-grow">
-                  {faqs.map((faq, index) => (
-                    <div
-                      key={index}
-                      className="bg-gray-50 border border-gray-200 rounded-lg p-5 hover:border-blue-200 transition-colors"
-                    >
-                      <h3 className="text-base font-bold text-gray-900 mb-2">
-                        {faq.question}
-                      </h3>
-                      <p className="text-gray-600 text-sm">{faq.answer}</p>
-                    </div>
-                  ))}
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      {/* Footer */}
-      <footer className="bg-white border-t border-gray-200 py-12">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="text-center">
-            <div className="flex items-center justify-center space-x-3 mb-6">
-              <div className="p-2 bg-gradient-to-br from-blue-500 to-blue-600 rounded-lg shadow-sm">
-                <Wallet className="w-6 h-6 text-white" />
-              </div>
-              <div>
-                <h3 className="text-xl font-bold text-gray-900">WalletTrack</h3>
-                <p className="text-gray-500 text-sm">Financial Intelligence</p>
-              </div>
-            </div>
-
-            <p className="text-gray-600 max-w-2xl mx-auto mb-8">
-              Taking the complexity out of personal finance management. Start
-              your journey to financial freedom today.
+      <main className="flex-1">
+        <div className="mx-auto max-w-5xl px-5 py-16 sm:px-6">
+          <div className="max-w-2xl">
+            <h1 className="text-4xl font-semibold tracking-tight text-balance">
+              Get in touch
+            </h1>
+            <p className="text-muted-foreground mt-4 text-lg text-pretty">
+              Found a bug, want a feature, or just curious how something works?
+              Send a note and you will get a reply.
             </p>
+          </div>
 
-            <div className="flex justify-center space-x-6 mb-8">
-              <Link
-                href="/"
-                className="text-gray-600 hover:text-blue-600 transition-colors"
-              >
-                Home
-              </Link>
-              <Link
-                href="/about"
-                className="text-gray-600 hover:text-blue-600 transition-colors"
-              >
-                About
-              </Link>
-              <Link href="/contact" className="text-blue-600 font-medium">
-                Contact
-              </Link>
-              <Link
-                href="/login"
-                className="text-gray-600 hover:text-blue-600 transition-colors"
-              >
-                Login
-              </Link>
-            </div>
+          <div className="mt-12 grid gap-8 lg:grid-cols-5">
+            <Card className="lg:col-span-3" asChild>
+              <form onSubmit={handleSubmit(onSubmit)} noValidate>
+                <CardHeader>
+                  <div>
+                    <CardTitle className="flex items-center gap-2">
+                      <MessageSquare className="size-4" aria-hidden />
+                      Send a message
+                    </CardTitle>
+                    <CardDescription>
+                      We usually reply within a couple of days.
+                    </CardDescription>
+                  </div>
+                </CardHeader>
 
-            <div className="border-t border-gray-200 pt-8">
-              <p className="text-gray-500">
-                © 2026 WalletTrack. Your financial journey starts here.
-              </p>
+                <CardContent className="space-y-4">
+                  {sent ? (
+                    <p
+                      role="status"
+                      className="bg-success-muted text-success flex items-start gap-2 rounded-lg px-3.5 py-2.5 text-sm"
+                    >
+                      <CheckCircle2 className="mt-0.5 size-4 shrink-0" aria-hidden />
+                      Thanks - your message is on its way. We will be in touch.
+                    </p>
+                  ) : null}
+
+                  {formError ? (
+                    <p
+                      role="alert"
+                      className="bg-destructive-muted text-destructive flex items-start gap-2 rounded-lg px-3.5 py-2.5 text-sm"
+                    >
+                      <AlertCircle className="mt-0.5 size-4 shrink-0" aria-hidden />
+                      {formError}
+                    </p>
+                  ) : null}
+
+                  <div className="grid gap-4 sm:grid-cols-2">
+                    <Field label="Name" required error={errors.name?.message}>
+                      {(ids) => (
+                        <Input {...ids} {...register("name")} autoComplete="name" />
+                      )}
+                    </Field>
+
+                    <Field label="Email" required error={errors.email?.message}>
+                      {(ids) => (
+                        <Input
+                          {...ids}
+                          {...register("email")}
+                          type="email"
+                          autoComplete="email"
+                        />
+                      )}
+                    </Field>
+                  </div>
+
+                  <Field label="Subject" required error={errors.subject?.message}>
+                    {(ids) => (
+                      <Input
+                        {...ids}
+                        {...register("subject")}
+                        placeholder="What is this about?"
+                      />
+                    )}
+                  </Field>
+
+                  <Field
+                    label="Message"
+                    required
+                    hint="The more detail, the better the answer."
+                    error={errors.message?.message}
+                  >
+                    {(ids) => (
+                      <Textarea
+                        {...ids}
+                        {...register("message")}
+                        rows={6}
+                        placeholder="Tell us what is on your mind..."
+                      />
+                    )}
+                  </Field>
+
+                  <Button type="submit" loading={isSubmitting} className="w-full sm:w-auto">
+                    <Mail />
+                    Send message
+                  </Button>
+                </CardContent>
+              </form>
+            </Card>
+
+            <div className="lg:col-span-2">
+              <h2 className="font-medium">Common questions</h2>
+
+              <dl className="mt-4 space-y-5">
+                {FAQS.map((faq) => (
+                  <div key={faq.question}>
+                    <dt className="text-sm font-medium">{faq.question}</dt>
+                    <dd className="text-muted-foreground mt-1 text-sm text-pretty">
+                      {faq.answer}
+                    </dd>
+                  </div>
+                ))}
+              </dl>
             </div>
           </div>
         </div>
-      </footer>
+      </main>
+
+      <SiteFooter />
     </div>
   );
 }

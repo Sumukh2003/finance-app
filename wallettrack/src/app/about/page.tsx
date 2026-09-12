@@ -1,128 +1,140 @@
+import type { Metadata } from "next";
 import Link from "next/link";
-import {
-  Wallet,
-  Target,
-  Shield,
-  TrendingUp,
-  Users,
-  Sparkles,
-  ArrowRight,
-} from "lucide-react";
+import { ArrowRight, Database, Lock, Server, Sparkles } from "lucide-react";
+
+import { Button } from "@/components/ui/button";
+import { Card } from "@/components/ui/card";
+import { SiteFooter, SiteHeader } from "@/components/layout/site-chrome";
+
+export const metadata: Metadata = {
+  title: "About",
+  description:
+    "What WalletTrack is, the principles behind it, and the stack it runs on.",
+};
+
+const PRINCIPLES = [
+  {
+    icon: Sparkles,
+    title: "Clarity over cleverness",
+    body: "Numbers are formatted consistently, aligned in columns, and never dressed up. If a figure is bad news, the interface says so plainly.",
+  },
+  {
+    icon: Lock,
+    title: "Your data stays yours",
+    body: "No third-party analytics, no bank credentials, no data sharing. Every query is scoped to your account, and sessions live in httpOnly cookies that scripts cannot read.",
+  },
+  {
+    icon: Server,
+    title: "Correct by default",
+    body: "Every request is validated on the server against the same rules the forms enforce, so bad data never reaches the database.",
+  },
+  {
+    icon: Database,
+    title: "Nothing locked in",
+    body: "Export everything you can see to CSV whenever you want. The data model is plain documents in MongoDB - no proprietary format.",
+  },
+] as const;
+
+const STACK = [
+  { name: "Next.js 16", role: "App Router, server components, route handlers" },
+  { name: "TypeScript", role: "Strict mode across the app and the API" },
+  { name: "MongoDB + Mongoose", role: "Documents, indexes and aggregations" },
+  { name: "Tailwind CSS v4", role: "Token-driven design system with dark mode" },
+  { name: "Zod", role: "One schema shared by the client and the server" },
+  { name: "Recharts", role: "Charts that follow the active theme" },
+] as const;
 
 export default function AboutPage() {
   return (
-    <div className="min-h-screen bg-gradient-to-b from-gray-50 to-gray-100">
-      {/* Header */}
-      <header className="bg-white/90 backdrop-blur-lg border-b border-gray-200">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 flex justify-between items-center">
-          <div className="flex items-center space-x-3">
-            <div className="p-2 bg-gradient-to-br from-blue-500 to-blue-600 rounded-xl">
-              <Wallet className="w-6 h-6 text-white" />
+    <div className="flex min-h-dvh flex-col">
+      <SiteHeader />
+
+      <main className="flex-1">
+        <section className="border-border border-b">
+          <div className="mx-auto max-w-3xl px-5 py-20 sm:px-6">
+            <h1 className="text-4xl font-semibold tracking-tight text-balance">
+              A finance tracker that respects your time
+            </h1>
+            <p className="text-muted-foreground mt-5 text-lg text-pretty">
+              Most personal finance apps want a bank connection, a subscription
+              and twenty minutes of onboarding. WalletTrack wants an email
+              address and about five minutes a month.
+            </p>
+            <p className="text-muted-foreground mt-4 text-pretty">
+              It does four things: records what you earn and spend, groups it by
+              category, holds that spending against limits you set, and shows
+              the trend over a rolling year. Everything else was left out on
+              purpose.
+            </p>
+          </div>
+        </section>
+
+        <section className="border-border border-b">
+          <div className="mx-auto max-w-5xl px-5 py-16 sm:px-6">
+            <h2 className="text-2xl font-semibold tracking-tight">
+              What it is built on
+            </h2>
+
+            <div className="mt-8 grid gap-5 sm:grid-cols-2">
+              {PRINCIPLES.map((principle) => (
+                <Card key={principle.title} className="p-6">
+                  <span
+                    className="bg-primary/10 text-primary flex size-10 items-center justify-center rounded-lg"
+                    aria-hidden
+                  >
+                    <principle.icon className="size-5" />
+                  </span>
+                  <h3 className="mt-4 font-medium">{principle.title}</h3>
+                  <p className="text-muted-foreground mt-2 text-sm text-pretty">
+                    {principle.body}
+                  </p>
+                </Card>
+              ))}
             </div>
-            <h1 className="text-xl font-bold text-gray-900">WalletTrack</h1>
           </div>
-          <Link
-            href="/"
-            className="text-gray-700 hover:text-blue-600 font-medium"
-          >
-            Home
-          </Link>
-        </div>
-      </header>
+        </section>
 
-      {/* Hero */}
-      <section className="py-20 text-center">
-        <div className="max-w-4xl mx-auto px-4">
-          <div className="inline-flex items-center px-4 py-2 rounded-full bg-blue-50 border border-blue-100 mb-6">
-            <Sparkles className="w-4 h-4 text-blue-600 mr-2" />
-            <span className="text-sm font-medium text-blue-700">
-              About WalletTrack
-            </span>
-          </div>
-
-          <h1 className="text-5xl font-bold text-gray-900 mb-6">
-            Building Smarter
-            <span className="block text-blue-600">Financial Habits</span>
-          </h1>
-
-          <p className="text-xl text-gray-600 leading-relaxed">
-            WalletTrack is designed to help individuals take control of their
-            finances through clarity, automation, and powerful insights.
-          </p>
-        </div>
-      </section>
-
-      {/* Mission & Vision */}
-      <section className="max-w-6xl mx-auto px-4 grid grid-cols-1 md:grid-cols-2 gap-8 mb-20">
-        <div className="bg-white border border-gray-200 rounded-2xl p-8">
-          <Target className="w-8 h-8 text-blue-600 mb-4" />
-          <h3 className="text-2xl font-bold text-gray-900 mb-4">Our Mission</h3>
-          <p className="text-gray-600 leading-relaxed">
-            To simplify personal finance management and empower users with tools
-            that promote responsible spending, smarter budgeting, and long-term
-            financial growth.
-          </p>
-        </div>
-
-        <div className="bg-white border border-gray-200 rounded-2xl p-8">
-          <TrendingUp className="w-8 h-8 text-green-600 mb-4" />
-          <h3 className="text-2xl font-bold text-gray-900 mb-4">Our Vision</h3>
-          <p className="text-gray-600 leading-relaxed">
-            A future where everyone understands their money, makes informed
-            decisions, and achieves financial independence with confidence.
-          </p>
-        </div>
-      </section>
-
-      {/* Values */}
-      <section className="max-w-6xl mx-auto px-4 mb-24">
-        <h2 className="text-4xl font-bold text-center text-gray-900 mb-12">
-          What We Stand For
-        </h2>
-
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-          <div className="bg-white border border-gray-200 rounded-2xl p-8 text-center">
-            <Shield className="w-10 h-10 text-purple-600 mx-auto mb-4" />
-            <h4 className="text-xl font-bold mb-3">Security First</h4>
-            <p className="text-gray-600">
-              Your financial data is protected with industry-grade security
-              practices.
+        <section className="bg-muted/40 border-border border-b">
+          <div className="mx-auto max-w-5xl px-5 py-16 sm:px-6">
+            <h2 className="text-2xl font-semibold tracking-tight">The stack</h2>
+            <p className="text-muted-foreground mt-2 text-sm">
+              Chosen to keep the app fast to run and straightforward to maintain.
             </p>
-          </div>
 
-          <div className="bg-white border border-gray-200 rounded-2xl p-8 text-center">
-            <Users className="w-10 h-10 text-blue-600 mx-auto mb-4" />
-            <h4 className="text-xl font-bold mb-3">User-Centric</h4>
-            <p className="text-gray-600">
-              Designed with real users in mind, focusing on simplicity and
-              usability.
-            </p>
+            <dl className="border-border mt-8 grid gap-px overflow-hidden rounded-xl border bg-border sm:grid-cols-2 lg:grid-cols-3">
+              {STACK.map((item) => (
+                <div key={item.name} className="bg-card p-5">
+                  <dt className="font-medium">{item.name}</dt>
+                  <dd className="text-muted-foreground mt-1 text-sm text-pretty">
+                    {item.role}
+                  </dd>
+                </div>
+              ))}
+            </dl>
           </div>
+        </section>
 
-          <div className="bg-white border border-gray-200 rounded-2xl p-8 text-center">
-            <Sparkles className="w-10 h-10 text-green-600 mx-auto mb-4" />
-            <h4 className="text-xl font-bold mb-3">Continuous Improvement</h4>
-            <p className="text-gray-600">
-              We constantly evolve to deliver smarter insights and better
-              experiences.
-            </p>
+        <section>
+          <div className="mx-auto max-w-3xl px-5 py-16 text-center sm:px-6">
+            <h2 className="text-2xl font-semibold tracking-tight text-balance">
+              Ready to see your own numbers?
+            </h2>
+            <div className="mt-7 flex flex-col items-center justify-center gap-3 sm:flex-row">
+              <Button size="lg" asChild>
+                <Link href="/register">
+                  Create an account
+                  <ArrowRight />
+                </Link>
+              </Button>
+              <Button size="lg" variant="outline" asChild>
+                <Link href="/contact">Get in touch</Link>
+              </Button>
+            </div>
           </div>
-        </div>
-      </section>
+        </section>
+      </main>
 
-      {/* CTA */}
-      <section className="bg-gradient-to-br from-blue-50 to-blue-100 border-t border-blue-200 py-16 text-center">
-        <h2 className="text-4xl font-bold text-gray-900 mb-6">
-          Ready to Take Control?
-        </h2>
-        <Link
-          href="/register"
-          className="inline-flex items-center bg-gradient-to-r from-blue-500 to-blue-600 text-white px-8 py-4 rounded-xl text-lg font-bold hover:shadow-lg"
-        >
-          Get Started
-          <ArrowRight className="w-5 h-5 ml-2" />
-        </Link>
-      </section>
+      <SiteFooter />
     </div>
   );
 }
