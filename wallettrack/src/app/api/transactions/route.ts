@@ -1,134 +1,72 @@
-export const runtime = "nodejs";
-
-import { NextResponse } from "next/server";
 import { connectDB } from "@/lib/db";
 import { Transaction } from "@/models/Transaction";
-import jwt from "jsonwebtoken";
+import {
+  created,
+  ok,
+  parseJsonBody,
+  parseSearchParams,
+  route,
+} from "@/lib/api/response";
+import { requireUser } from "@/lib/auth/guard";
+import {
+  buildTransactionFilter,
+  getTransactionTotals,
+  serializeTransaction,
+  sortSpecFor,
+} from "@/lib/queries/transactions";
+import {
+  createTransactionSchema,
+  transactionQuerySchema,
+} from "@/lib/validations/transaction";
 
-const JWT_SECRET = process.env.JWT_SECRET!;
+export const runtime = "nodejs";
+export const dynamic = "force-dynamic";
 
-async function authenticate(req: Request) {
-  const authHeader = req.headers.get("authorization");
-  if (!authHeader?.startsWith("Bearer ")) {
-    throw new Error("Unauthorized");
-  }
-  const token = authHeader.split(" ")[1];
-  const decoded: any = jwt.verify(token, JWT_SECRET);
-  return decoded.userId;
-}
+export const GET = route(async (request) => {
+  const user = await requireUser();
+  const query = parseSearchParams(request, transactionQuerySchema);
 
-export async function GET(req: Request) {
-  try {
-    await connectDB();
-    const userId = await authenticate(req);
+  await connectDB();
 
-    const url = new URL(req.url);
-    const page = parseInt(url.searchParams.get("page") || "1");
-    const limit = parseInt(url.searchParams.get("limit") || "10");
-    const search = url.searchParams.get("search") || "";
-    const sort = url.searchParams.get("sort") || "-date";
-    const type = url.searchParams.get("type");
+  const filter = buildTransactionFilter(user.objectId, query);
+  const skip = (query.page - 1) * query.limit;
 
-    const query: any = { userId };
-    if (type) query.type = type;
+  // The count, the page, and the totals are independent reads: run them
+  // concurrently rather than paying for three sequential round trips.
+  const [total, documents, totals] = await Promise.all([
+    Transaction.countDocuments(filter),
+    Transaction.find(filter)
+      .sort(sortSpecFor(query.sort))
+      .skip(skip)
+      .limit(query.limit)
+      .lean(),
+    getTransactionTotals(filter),
+  ]);
 
-    if (search) {
-      query.$or = [
-        { category: { $regex: search, $options: "i" } },
-        { description: { $regex: search, $options: "i" } },
-      ];
-    }
-
-    const total = await Transaction.countDocuments(query);
-    const transactions = await Transaction.find(query)
-      .sort(sort)
-      .skip((page - 1) * limit)
-      .limit(limit);
-
-    return NextResponse.json({
-      success: true,
+  return ok({
+    transactions: documents.map(serializeTransaction),
+    pagination: {
+      page: query.page,
+      limit: query.limit,
       total,
-      page,
-      limit,
-      transactions,
-    });
-  } catch (err: any) {
-    return NextResponse.json(
-      { success: false, error: err.message },
-      { status: 401 }
-    );
-  }
-}
+      totalPages: Math.max(1, Math.ceil(total / query.limit)),
+      hasMore: skip + documents.length < total,
+    },
+    totals,
+  });
+});
 
-export async function POST(req: Request) {
-  try {
-    await connectDB();
-    const userId = await authenticate(req);
+export const POST = route(async (request) => {
+  const user = await requireUser();
+  const input = await parseJsonBody(request, createTransactionSchema);
 
-    const { type, category, description, amount, date } = await req.json();
-    if (!type || !category || !amount) {
-      return NextResponse.json(
-        { success: false, error: "Type, category, and amount are required" },
-        { status: 400 }
-      );
-    }
+  await connectDB();
 
-    const transaction = await Transaction.create({
-      userId,
-      type,
-      category,
-      description,
-      amount,
-      date: date || new Date(),
-    });
+  const transaction = await Transaction.create({
+    ...input,
+    description: input.description ?? "",
+    userId: user.objectId,
+  });
 
-    return NextResponse.json({ success: true, transaction }, { status: 201 });
-  } catch (err: any) {
-    return NextResponse.json(
-      { success: false, error: err.message },
-      { status: 401 }
-    );
-  }
-}
-
-export async function PUT(req: Request) {
-  try {
-    await connectDB();
-    const userId = await authenticate(req);
-    const { id, type, category, description, amount, date } = await req.json();
-    if (!id) throw new Error("Transaction ID required");
-
-    const transaction = await Transaction.findOneAndUpdate(
-      { _id: id, userId },
-      { type, category, description, amount, date },
-      { new: true }
-    );
-
-    if (!transaction) throw new Error("Transaction not found");
-    return NextResponse.json({ success: true, transaction });
-  } catch (err: any) {
-    return NextResponse.json(
-      { success: false, error: err.message },
-      { status: 400 }
-    );
-  }
-}
-
-export async function DELETE(req: Request) {
-  try {
-    await connectDB();
-    const userId = await authenticate(req);
-    const { id } = await req.json();
-    if (!id) throw new Error("Transaction ID required");
-
-    const deleted = await Transaction.findOneAndDelete({ _id: id, userId });
-    if (!deleted) throw new Error("Transaction not found");
-
-    return NextResponse.json({ success: true });
-  } catch (err: any) {
-    return NextResponse.json(
-      { success: false, error: err.message },
-      { status: 400 }
-    );
-  }
-}
+  return created({ transaction: serializeTransaction(transaction.toObject()) });
+});

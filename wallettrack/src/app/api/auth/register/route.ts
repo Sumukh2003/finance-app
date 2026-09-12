@@ -1,45 +1,52 @@
-import { NextResponse } from "next/server";
-import bcrypt from "bcryptjs";
 import { connectDB } from "@/lib/db";
 import { User } from "@/models/User";
+import { ApiError } from "@/lib/api/errors";
+import { created, parseJsonBody, route } from "@/lib/api/response";
+import { hashPassword } from "@/lib/auth/password";
+import { createSessionToken, setSessionCookie } from "@/lib/auth/session";
+import { enforceRateLimit, getClientIp } from "@/lib/rate-limit";
+import { registerSchema } from "@/lib/validations/auth";
 
-export async function POST(req: Request) {
-  try {
-    const { name, email, password } = await req.json();
+export const runtime = "nodejs";
+export const dynamic = "force-dynamic";
 
-    if (!name || !email || !password) {
-      return NextResponse.json(
-        { message: "All fields are required" },
-        { status: 400 }
-      );
-    }
+export const POST = route(async (request) => {
+  enforceRateLimit({
+    key: `register:${getClientIp(request)}`,
+    limit: 5,
+    windowMs: 60 * 60 * 1000,
+  });
 
-    await connectDB();
+  const { name, email, password } = await parseJsonBody(request, registerSchema);
 
-    const existingUser = await User.findOne({ email });
-    if (existingUser) {
-      return NextResponse.json(
-        { message: "User already exists" },
-        { status: 409 }
-      );
-    }
+  await connectDB();
 
-    const hashedPassword = await bcrypt.hash(password, 10);
-
-    await User.create({
-      name,
-      email,
-      password: hashedPassword,
-    });
-
-    return NextResponse.json(
-      { message: "User registered successfully" },
-      { status: 201 }
-    );
-  } catch (error) {
-    return NextResponse.json(
-      { message: "Something went wrong" },
-      { status: 500 }
-    );
+  if (await User.exists({ email })) {
+    // Registration inherently reveals whether an address is taken, so a clear
+    // message here costs nothing the flow does not already give away.
+    throw ApiError.conflict("An account with that email already exists.");
   }
-}
+
+  const user = await User.create({
+    name,
+    email,
+    passwordHash: await hashPassword(password),
+  });
+
+  await setSessionCookie(
+    await createSessionToken({
+      userId: user._id.toString(),
+      email: user.email,
+      name: user.name,
+    }),
+  );
+
+  return created({
+    user: {
+      id: user._id.toString(),
+      name: user.name,
+      email: user.email,
+      currency: user.currency,
+    },
+  });
+});

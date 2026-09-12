@@ -1,137 +1,164 @@
-export const runtime = "nodejs";
-
-import { NextResponse } from "next/server";
-import mongoose from "mongoose";
-import jwt from "jsonwebtoken";
 import { connectDB } from "@/lib/db";
 import { Transaction } from "@/models/Transaction";
-import Budget from "@/models/Budget";
+import { ok, parseSearchParams, route } from "@/lib/api/response";
+import { requireUser, type AuthenticatedUser } from "@/lib/auth/guard";
+import { getBudgetSummary } from "@/lib/queries/budgets";
+import { serializeTransaction } from "@/lib/queries/transactions";
+import { currentMonth, lastNMonths, monthRange, previousMonth } from "@/lib/date";
+import { dashboardQuerySchema } from "@/lib/validations/dashboard";
 
-const JWT_SECRET = process.env.JWT_SECRET!;
+export const runtime = "nodejs";
+export const dynamic = "force-dynamic";
 
-/* ---------- Auth Helper ---------- */
-function getUserId(req: Request) {
-  const authHeader = req.headers.get("authorization");
-  if (!authHeader?.startsWith("Bearer ")) {
-    throw new Error("Unauthorized");
-  }
+const TREND_MONTHS = 12;
+const RECENT_LIMIT = 6;
 
-  const token = authHeader.split(" ")[1];
-  const decoded: any = jwt.verify(token, JWT_SECRET);
-  return new mongoose.Types.ObjectId(decoded.userId);
+type Totals = { income: number; expense: number };
+
+/**
+ * Income and expense totals over an arbitrary date window.
+ *
+ * The window is a Mongo date predicate, so the same aggregation serves both
+ * "this month" and "everything up to this point".
+ */
+async function sumTransactions(
+  user: AuthenticatedUser,
+  date: Record<string, Date>,
+): Promise<Totals> {
+  const [result] = await Transaction.aggregate<Totals>([
+    { $match: { userId: user.objectId, date } },
+    {
+      $group: {
+        _id: null,
+        income: { $sum: { $cond: [{ $eq: ["$type", "income"] }, "$amount", 0] } },
+        expense: { $sum: { $cond: [{ $eq: ["$type", "expense"] }, "$amount", 0] } },
+      },
+    },
+  ]);
+
+  return { income: result?.income ?? 0, expense: result?.expense ?? 0 };
 }
 
-/* ---------- GET Dashboard Data ---------- */
-export async function GET(req: Request) {
-  try {
-    await connectDB();
-    const userId = getUserId(req);
-
-    const url = new URL(req.url);
-
-    // default = current month
-    const currentMonth = new Date().toISOString().slice(0, 7);
-    const month = url.searchParams.get("month") || currentMonth;
-
-    const startOfMonth = new Date(`${month}-01`);
-    const endOfMonth = new Date(
-      new Date(startOfMonth).setMonth(startOfMonth.getMonth() + 1)
-    );
-
-    /* ---------- Income & Expense ---------- */
-    const summary = await Transaction.aggregate([
-      {
-        $match: {
-          userId,
-          date: { $gte: startOfMonth, $lt: endOfMonth },
-        },
-      },
-      {
-        $group: {
-          _id: "$type",
-          total: { $sum: "$amount" },
-        },
-      },
-    ]);
-
-    let income = 0;
-    let expense = 0;
-
-    summary.forEach((item) => {
-      if (item._id === "income") income = item.total;
-      if (item._id === "expense") expense = item.total;
-    });
-
-    /* ---------- Category-wise Expenses (FIXED) ---------- */
-    const categories = await Transaction.aggregate([
-      {
-        $match: {
-          userId,
-          type: "expense",
-          date: { $gte: startOfMonth, $lt: endOfMonth },
-        },
-      },
-      {
-        $group: {
-          _id: "$category",
-          total: { $sum: "$amount" }, // 👈 IMPORTANT
-        },
-      },
-    ]);
-
-    /* ---------- Monthly Trend (NEW) ---------- */
-    const monthly = await Transaction.aggregate([
-      { $match: { userId } },
-      {
-        $group: {
-          _id: {
-            year: { $year: "$date" },
-            month: { $month: "$date" },
-          },
-          income: {
-            $sum: {
-              $cond: [{ $eq: ["$type", "income"] }, "$amount", 0],
-            },
-          },
-          expense: {
-            $sum: {
-              $cond: [{ $eq: ["$type", "expense"] }, "$amount", 0],
-            },
-          },
-        },
-      },
-      { $sort: { "_id.year": 1, "_id.month": 1 } },
-    ]);
-
-    /* ---------- Budgets ---------- */
-    const budgets = await Budget.find({ userId, month });
-
-    const budgetSummary = budgets.map((b) => {
-      const spent = categories.find((c) => c._id === b.category)?.total || 0;
-
-      return {
-        category: b.category,
-        limit: b.limit,
-        spent,
-        remaining: b.limit - spent,
-        exceeded: spent > b.limit,
-      };
-    });
-
-    return NextResponse.json({
-      success: true,
-      month,
-      income,
-      expense,
-      balance: income - expense,
-      categories, // ✅ Pie chart
-      monthly, // ✅ Line chart
-      budgets: budgetSummary,
-    });
-  } catch (err: any) {
-    return NextResponse.json(
-      { success: false, error: err.message },
-      { status: 401 }
-    );
-  }
+/** Income and expense totals for a single month. */
+function totalsForMonth(user: AuthenticatedUser, month: string): Promise<Totals> {
+  const { start, end } = monthRange(month);
+  return sumTransactions(user, { $gte: start, $lt: end });
 }
+
+export const GET = route(async (request) => {
+  const user = await requireUser();
+  const { month = currentMonth() } = parseSearchParams(
+    request,
+    dashboardQuerySchema,
+  );
+
+  await connectDB();
+
+  const { start, end } = monthRange(month);
+  const trendMonths = lastNMonths(month, TREND_MONTHS);
+  const trendStart = monthRange(trendMonths[0]!).start;
+
+  const [current, previous, opening, categoryRows, trendRows, budgets, recent] =
+    await Promise.all([
+      totalsForMonth(user, month),
+      totalsForMonth(user, previousMonth(month)),
+
+      // Everything recorded before this month started. This is what makes the
+      // balance a running total rather than a monthly figure that resets: it
+      // carries forward every transaction the user has ever recorded, so any
+      // addition or deletion - in any month - moves it.
+      sumTransactions(user, { $lt: start }),
+
+      // Expense split by category for the selected month.
+      Transaction.aggregate<{ _id: string; total: number; count: number }>([
+        {
+          $match: {
+            userId: user.objectId,
+            type: "expense",
+            date: { $gte: start, $lt: end },
+          },
+        },
+        {
+          $group: { _id: "$category", total: { $sum: "$amount" }, count: { $sum: 1 } },
+        },
+        { $sort: { total: -1 } },
+      ]),
+
+      // Trend, bounded to the last 12 months. The previous implementation
+      // scanned every transaction the user had ever recorded, so the query grew
+      // without limit as history accumulated.
+      Transaction.aggregate<{ _id: string; income: number; expense: number }>([
+        {
+          $match: {
+            userId: user.objectId,
+            date: { $gte: trendStart, $lt: end },
+          },
+        },
+        {
+          $group: {
+            // Explicitly UTC, matching how dates are stored and how monthRange slices
+            // them. Left implicit, this silently disagreed with the month summary.
+            _id: { $dateToString: { format: "%Y-%m", date: "$date", timezone: "UTC" } },
+            income: { $sum: { $cond: [{ $eq: ["$type", "income"] }, "$amount", 0] } },
+            expense: { $sum: { $cond: [{ $eq: ["$type", "expense"] }, "$amount", 0] } },
+          },
+        },
+      ]),
+
+      getBudgetSummary(user.objectId, month),
+
+      Transaction.find({ userId: user.objectId })
+        .sort({ date: -1, _id: -1 })
+        .limit(RECENT_LIMIT)
+        .lean(),
+    ]);
+
+  // Months with no activity are absent from the aggregation. Filling them with
+  // zeros keeps the x-axis continuous instead of collapsing empty months.
+  const trendByMonth = new Map(trendRows.map((row) => [row._id, row]));
+  const trend = trendMonths.map((key) => ({
+    month: key,
+    income: trendByMonth.get(key)?.income ?? 0,
+    expense: trendByMonth.get(key)?.expense ?? 0,
+    net: (trendByMonth.get(key)?.income ?? 0) - (trendByMonth.get(key)?.expense ?? 0),
+  }));
+
+  // What the month itself did: money in minus money out, this month only.
+  const net = current.income - current.expense;
+
+  // What the user actually holds. `openingBalance` is everything up to the
+  // start of the month, so the running balance is the opening figure plus the
+  // month's movement - no extra query, and the two can never disagree.
+  const openingBalance = opening.income - opening.expense;
+  const balance = openingBalance + net;
+
+  const totalExpense = current.expense;
+
+  return ok({
+    month,
+    summary: {
+      income: current.income,
+      expense: current.expense,
+      net,
+      balance,
+      openingBalance,
+      // Savings rate is a property of the month, so it uses the month's net -
+      // measuring it against a lifetime balance would be meaningless.
+      savingsRate: current.income > 0 ? (net / current.income) * 100 : 0,
+      previous: {
+        income: previous.income,
+        expense: previous.expense,
+        net: previous.income - previous.expense,
+      },
+    },
+    categories: categoryRows.map((row) => ({
+      category: row._id,
+      total: row.total,
+      count: row.count,
+      share: totalExpense > 0 ? (row.total / totalExpense) * 100 : 0,
+    })),
+    trend,
+    budgets,
+    recentTransactions: recent.map(serializeTransaction),
+  });
+});
